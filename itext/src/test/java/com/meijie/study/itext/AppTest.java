@@ -1,4 +1,4 @@
-package com.meijie.study.image;
+package com.meijie.study.itext;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
