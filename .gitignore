@@ -1,8 +1,15 @@
 *.swp
 *.o
 a.out
+.classpath
+.project
+.settings
+!.mvn/wrapper/maven-wrapper.jar
 
 .metadata/
 .recommenders/
 
 image/target/
+itext/target/
+springbootdemo/logs/
+springbootdemo/target/
