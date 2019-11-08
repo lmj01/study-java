@@ -2,10 +2,12 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>hello</title>
+	<title th:text="${title}"></title>
+	<style>iframe{min-height: 600px; height:90%;width:100%;}</style>
 </head>
 <body>
 <p th:text="'Hello, ' + ${name} + '!'" />
 <a href="standalone1/web/viewer.html">portable pdf viewer</a>
+<iframe src="standalone1/web/viewer.html"></iframe>
 </body>
 </html>

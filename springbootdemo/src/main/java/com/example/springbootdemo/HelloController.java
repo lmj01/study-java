@@ -33,7 +33,7 @@ public class HelloController {
         // 加入一个属性，用来在模板中读取
     	System.out.println(String.format("count now is %d", count++));
         map.addAttribute("name", userName);
-        map.addAttribute("Title", title);
+        map.addAttribute("title", title);
         // return模板文件的名称，对应src/main/resources/templates/viewing.html
         return "viewing";
     }
