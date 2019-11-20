@@ -9,7 +9,7 @@ public class DemoFont {
 
 	public static PdfFont get() {
 		
-        PdfFontFactory.registerDirectory("c:\\windows\\fonts\\");
+        //PdfFontFactory.registerDirectory("c:\\windows\\fonts\\");
         
 //        for (String str: PdfFontFactory.getRegisteredFonts()) {
 //        	System.out.println(str);
