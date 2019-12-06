@@ -11,6 +11,7 @@
   <url>http://maven.apache.org</url>
 
   <properties>
+  <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -76,6 +77,19 @@
          <artifactId>hyph</artifactId>         
          <version>7.0.2</version>    
       </dependency> 
+      
+ 	     <!-- https://mvnrepository.com/artifact/com.google.zxing/core -->
+		<dependency>
+		    <groupId>com.google.zxing</groupId>
+		    <artifactId>core</artifactId>
+		    <version>3.4.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
+<dependency>
+    <groupId>com.google.zxing</groupId>
+    <artifactId>javase</artifactId>
+    <version>3.4.0</version>
+</dependency>
     
   </dependencies> 
 </project>

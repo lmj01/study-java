@@ -13,9 +13,13 @@ public class App
 //    	DemoElement element = new DemoElement();
 //    	element.run();
 //    	 
-    	DemoCanvas canvas = new DemoCanvas();
-    	canvas.run();
-    	    	
+//    	DemoCanvas canvas = new DemoCanvas();
+//    	canvas.run();
+    	
+//    	MqPdf pdf = new MqPdf();
+//    	pdf.draw();
+//    	    	
+    	BarCode.test();
     }
     
 }
