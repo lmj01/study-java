@@ -1,4 +1,4 @@
-package com.example.springbootdemo;
+package Pdf;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,12 +6,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DemoApplication {
+public class PdfApplication {
 
 	private static final Logger logger = 
-			LoggerFactory.getLogger(DemoApplication.class);
+			LoggerFactory.getLogger(PdfApplication.class);
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(PdfApplication.class, args);
 		logger.info("start server");
 		logger.error("error message");
 	}
