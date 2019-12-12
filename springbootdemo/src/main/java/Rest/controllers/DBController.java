@@ -27,6 +27,12 @@ public class DBController {
 		return "success !";
 	}
 	
+	@GetMapping(path="/find")
+	public @ResponseBody Phone findPhone(@RequestParam String phoneNumber) {
+		System.out.println(phoneNumber);
+		return repoPhone.findByPhoneNumber(phoneNumber);
+	}
+	
 	@GetMapping(path="/all")
 	public @ResponseBody Iterable<Phone> getAllPhone() {
 		return repoPhone.findAll();

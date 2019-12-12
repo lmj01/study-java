@@ -6,5 +6,5 @@ import Rest.entity.Phone;
 
 public interface RepositoryPhone extends CrudRepository<Phone, Long> {
 
-	
+	Phone findByPhoneNumber(String phoneNumber);
 }

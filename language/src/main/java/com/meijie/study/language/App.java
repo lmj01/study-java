@@ -16,6 +16,9 @@ public class App
         
 //        UseTime.test();
         
-        UseChar.test();
+//        UseChar.test();
+        
+        UseMath.test();
+        
     }
 }
