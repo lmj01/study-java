@@ -1,4 +1,4 @@
-package Rest.entity;
+package demo.entity;
 
 public class Greeting {
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title th:text="${title}"></title>
+	<script type="text/javascript" src="js/common.js"></script>
+	<style>iframe{min-height: 600px; height:90%;width:100%;}</style>
+</head>
+<body>
+<p th:text="'Hello, Api test' + '!'" />
+<div>
+	<button id="btn-postapi">post api</button> <br />
+	<button id="btn-postjson">post api with json</button>
+</div>
+<br />
+<form action="/api/data" method="post" onsubmit="">
+	<fieldset>
+		<legend>Test api data </legend>
+		<input type="text" name="name" placeholder="name"><br />
+		<input type="password" name="password" placeholder="password">
+		<input type="submit" value="Submit">
+	</fieldset>
+</form>
+</body>
+<script>
+	(function(){
+		
+		document.getElementById('btn-postapi').addEventListener('click', e=>{
+			mjpost('/api/url', {code:2}, 'json')
+			.then(res=>{
+				console.log('success', res);
+			}, res=>{
+				console.log('not success',res);
+			})
+		});
+		
+		document.getElementById('btn-postjson').addEventListener('click', e=>{
+			mjpost('/api/json', {code:2,message:'url with json'}, 'json')
+			.then(res=>{
+				console.log('success', res);
+			}, res=>{
+				console.log('not success',res);
+			})
+		});
+		
+	})()	
+</script>
+</html>

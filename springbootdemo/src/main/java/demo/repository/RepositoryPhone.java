@@ -1,8 +1,8 @@
-package Rest.repository;
+package demo.repository;
 
 import org.springframework.data.repository.CrudRepository;
 
-import Rest.entity.Phone;
+import demo.entity.Phone;
 
 public interface RepositoryPhone extends CrudRepository<Phone, Long> {
 
