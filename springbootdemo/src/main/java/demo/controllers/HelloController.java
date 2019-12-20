@@ -33,10 +33,26 @@ public class HelloController {
     public String index(ModelMap map) {
         // 加入一个属性，用来在模板中读取
     	System.out.println(String.format("count now is %d", count++));
-        map.addAttribute("name", userName);
+        map.addAttribute("name", "Study Java");
         map.addAttribute("title", title);
         // return模板文件的名称，对应src/main/resources/templates/viewing.html
-        return "viewing";
+        return "index";
+    }
+    
+    @RequestMapping("/demo")
+    public String demo(ModelMap map) {
+        map.addAttribute("name", "demo");
+        map.addAttribute("title", "demo");
+        // return模板文件的名称，对应src/main/resources/templates/viewing.html
+        return "demo";
+    }
+    
+    @RequestMapping("/hello")
+    public String hello(ModelMap map) {
+        map.addAttribute("name", "hello");
+        map.addAttribute("title", "hello");
+        // return模板文件的名称，对应src/main/resources/templates/viewing.html
+        return "hello";
     }
     
     @RequestMapping("/api")

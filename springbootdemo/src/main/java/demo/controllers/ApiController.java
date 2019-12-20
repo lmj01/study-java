@@ -1,5 +1,6 @@
 package demo.controllers;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -12,10 +13,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import common.Util;
 import demo.entity.Greeting;
 import demo.vo.InData;
+import demo.vo.InUserData;
 import demo.vo.RetData;
 
 /**
@@ -43,22 +46,19 @@ public class ApiController {
 	}
 	
 	@ResponseBody
-    //@RequestMapping(value="/api/url", method=RequestMethod.POST, produces="application/json")
+    //@RequestMapping(value="/api/url?code=3", method=RequestMethod.POST, produces="application/json")
 	@RequestMapping(value="/api/url", method=RequestMethod.POST)
-    public RetData getApiData(@RequestBody InData inData) {
+    public RetData getApiData(@RequestParam Integer code) {
     	
 		RetData ret = new RetData();
 		ret.setMessage("ok");
-		if (inData != null) {
-			String inStr = String.format("---------------%d, %s", inData.getCode(), inData.getMessage());
-	    	logger.info(inStr);
-		}
-
+		String inStr = String.format("---------------%d", code);
+    	logger.info(inStr);
     	logger.info("get api ");
     	    	
     	return ret;    	
     }
-
+	
 
 	@ResponseBody
     @RequestMapping(value="/api/json", method=RequestMethod.POST, produces="application/json")
@@ -73,10 +73,20 @@ public class ApiController {
     }
     
 
-    @RequestMapping(value="/api/form", method=RequestMethod.POST, produces="application/json")
-    public void getFormData() {
+    @RequestMapping(value="/api/form", consumes="multipart/form-data", method=RequestMethod.POST, produces="application/json")
+    //public String getFormData(@RequestBody(required=false) InUserData inData) {
+    public String getFormData(@RequestParam(value="name", required=true) final String name,
+    						  @RequestParam(value="password", required=true) final String password,
+    						  @RequestParam("docFiles") List<MultipartFile> docFiles) {
     	
     	HttpHeaders headers = Util.getHttpHeaders();
     	
+    	//String inStr = String.format("post in user data --------%s, %s", inData.getName(), inData.getPassword());
+    	//logger.info(inStr);
+    	
+    	String inStr = String.format("post in user data --------%s, %s", name, password);
+    	logger.info(inStr);
+    	
+    	return "ok";
     }
 }

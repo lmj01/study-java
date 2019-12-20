@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title th:text="${title}"></title>
+	<script type="text/javascript" src="js/common.js"></script>
+	<script type="text/javascript" src="js/util.js"></script>
+	<script type="text/javascript" src="libs/vue-2.6.11/vue.min.js"></script>
+</head>
+<body>
+<p th:text="'Hello, ' + ${name} + '!'" />
+<div id="app1">
+	<com-for></com-for>
+</div>
+</body>
+<script>
+	(function(){
+		let arr = ["2019-12-19 16:42:43", "2019-12-19 16:45:09", "2019-12-19 16:45:46", "2019-10-24 11:02:20", "2019-10-24 19:34:25", "2019-10-24 19:35:05"];
+		console.log('origina data:', arr);
+		arr.sort(mj.decDate);
+		console.log('decrement order data:', arr);
+		arr.sort(mj.incDate);
+		console.log('increment order data:', arr);
+	})()
+	let app1 = new Vue({
+		components: {
+			"com-for": {
+				template:
+					`<div>
+						<div v-for="(v,k) in count">
+							<div>
+							<span>{{k}}------{{count - k - 1}}-------{{v}}</span>
+							</div>
+						</div>
+					</div>`,
+				data: function() {
+					return {
+						count: 5
+					}
+				}
+			}
+		},
+		el:'#app1',
+		data: {
+			
+		}
+	})
+</script>
+</html>

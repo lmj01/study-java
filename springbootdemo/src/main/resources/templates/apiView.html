@@ -4,29 +4,30 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title th:text="${title}"></title>
 	<script type="text/javascript" src="js/common.js"></script>
-	<style>iframe{min-height: 600px; height:90%;width:100%;}</style>
+	<style>iframe{display:none}</style>
 </head>
 <body>
 <p th:text="'Hello, Api test' + '!'" />
 <div>
-	<button id="btn-postapi">post api</button> <br />
-	<button id="btn-postjson">post api with json</button>
+	<button id="btn-postapi">post url</button> <br />
+	<button id="btn-postjson">post with json</button>
 </div>
 <br />
-<form action="/api/data" method="post" onsubmit="">
+<form action="/api/form" method="post" id="id-form" target="emptyframe">
 	<fieldset>
 		<legend>Test api data </legend>
 		<input type="text" name="name" placeholder="name"><br />
 		<input type="password" name="password" placeholder="password">
-		<input type="submit" value="Submit">
+		<input type="submit" value="Submit" onclick="postForm()">
 	</fieldset>
 </form>
+<iframe name="emptyframe" id="id-emptyframe" src="" width="0" height="0"></iframe>
 </body>
 <script>
 	(function(){
 		
 		document.getElementById('btn-postapi').addEventListener('click', e=>{
-			mjpost('/api/url', {code:2}, 'json')
+			mjpost('/api/url?code=3', null, 'json')
 			.then(res=>{
 				console.log('success', res);
 			}, res=>{
@@ -43,6 +44,21 @@
 			})
 		});
 		
-	})()	
+		document.getElementById('id-emptyframe').addEventListener('load', e=>{
+			console.log(e);
+		});
+		
+	})()
+	
+	function postForm() {
+		let data = new FormData(document.getElementById('id-form'));
+		console.log(data);
+		mjpost('/api/form', data, 'formdata')
+		.then(res=>{
+			console.log('success', res);
+		}, res=>{
+			console.log('not success',res);
+		});
+	}
 </script>
 </html>

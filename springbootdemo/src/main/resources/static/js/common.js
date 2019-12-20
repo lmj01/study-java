@@ -16,7 +16,10 @@ window.mjpost = function(url, args, type) {
 			}
 		}
 		if (args instanceof Object) {
-			xhr.send(JSON.stringify(args));
+			if (type == 'formdata') {
+				console.log(args);
+				xhr.send(args);
+			} else xhr.send(JSON.stringify(args));
 		} else xhr.send();
 	});
 }

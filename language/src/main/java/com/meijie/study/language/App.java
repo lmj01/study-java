@@ -10,15 +10,15 @@ public class App
     {
         System.out.println( "Hello World!" );
         
-//        UseMap.test();
-//        
+        UseMap.test();
+        
 //        UseDate.test();
         
 //        UseTime.test();
         
 //        UseChar.test();
         
-        UseMath.test();
+//        UseMath.test();
         
     }
 }
