@@ -10,7 +10,7 @@ public class App
     {
         System.out.println( "Hello World!" );
         
-        UseMap.test();
+//        UseMap.test();
         
 //        UseDate.test();
         
@@ -20,5 +20,8 @@ public class App
         
 //        UseMath.test();
         
+//        UseList.test();
+        
+        Others.test();
     }
 }

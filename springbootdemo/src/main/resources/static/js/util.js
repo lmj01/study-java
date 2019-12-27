@@ -12,3 +12,5 @@ mj.incDate = (a,b)=>{
 	if (x <= y) return -1;
 	return 1;
 }
+// uuid replace
+mj.uuid = (uuidv1)=>{return uuidv1.replace(new RegExp('-','gi'), '');}

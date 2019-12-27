@@ -47,6 +47,14 @@ public class HelloController {
         return "demo";
     }
     
+    @RequestMapping("/demo2")
+    public String demoThird(ModelMap map) {
+        map.addAttribute("name", "demo third library");
+        map.addAttribute("title", "demo third library ");
+        // return模板文件的名称，对应src/main/resources/templates/viewing.html
+        return "demo2";
+    }
+    
     @RequestMapping("/hello")
     public String hello(ModelMap map) {
         map.addAttribute("name", "hello");

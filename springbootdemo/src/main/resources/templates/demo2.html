@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title th:text="${title}"></title>
+	<script type="text/javascript" src="js/util.js"></script>
+</head>
+<body>
+<p th:text="'Hello, ' + ${name} + '!'" />
+<div id="app1">
+</div>
+</body>
+<script src="libs/uuid/uuid_v1@latest.min.js"></script>
+<script src="libs/uuid/uuid_v3@latest.min.js"></script>
+<script src="libs/uuid/uuid_v4@latest.min.js"></script>
+<script src="libs/uuid/uuid_v5@latest.min.js"></script>
+<script>
+	// src="http://wzrd.in/standalone/uuid%2Fv3@latest"
+	(function(){		
+		let u1 = uuidv1(); // u1.replace(new RegExp('-', 'gi'),'')
+		console.log('v1, ',u1, mj.uuid(u1));
+		let u3 = uuidv3('http://example.com/hello', uuidv3.URL);
+		console.log('v3, ', mj.uuid(u3));
+		let u4 = uuidv4();
+		console.log('v4, ', mj.uuid(u4));
+		let u5 = uuidv5('http://example.com/hello', uuidv5.URL);
+		console.log('v5, ', mj.uuid(u5));
+	})()	
+	
+</script>
+</html>
