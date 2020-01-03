@@ -20,8 +20,8 @@ public class App
         
 //        UseMath.test();
         
-//        UseList.test();
+        UseList.test();
         
-        Others.test();
+//        Others.test();
     }
 }

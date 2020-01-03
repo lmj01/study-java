@@ -5,9 +5,12 @@
 	<title th:text="${title}"></title>
 </head>
 <body>
-	<h1>error页面</h1>
-	<p th:text="${status}" />
-	<p th:text="${error}" />
-	<p th:text="${message}" />
+	<p th:text="'Hello, ' + ${name} + '!'" />
+	<div>
+		<a href="draco/decode"><p>three.js draco decode demo</p></a>	
+	</div>
+	<div>
+		<a href="draco/encode"><p>three.js draco encode demo</p></a>	
+	</div>
 </body>
 </html>
