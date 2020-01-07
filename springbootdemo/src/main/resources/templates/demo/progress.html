@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title th:text="${title}"></title>
+	<script type="text/javascript" src="../js/util.js"></script>
+	<style>
+        ..bar-container {
+		  width: 100%;
+		  background: #ccc;
+		  border: 1px solid #eee;
+		  margin-bottom: 10px;
+		}
+		
+		.loader {
+		  height: 20px;
+		  background: #434334;
+		  width: 0px;
+		  transition: width 4s ease;
+		}
+		
+		.active  {
+		  width: 100%;
+		}
+    </style>
+</head>
+<body>
+<p th:text="'Hello, ' + ${name} + '!'" />
+<button id="button">click me</button>
+<div class="container"></div>
+
+<div style="display: none">
+  <div class="bar-container">
+    <div class="loader">
+    </div>
+  </div>
+</div>
+    <script src="../js/progress.js"></script>
+    <script>
+    	// https://codereview.stackexchange.com/questions/176427/javascript-progress-bar-in-succession
+    </script>
+</body>
+</html>

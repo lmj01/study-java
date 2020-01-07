@@ -26,6 +26,12 @@ public class DemoController {
         map.addAttribute("title", "uuid");
         return "demo/uuid";
     }
+    
+    @RequestMapping("/progress")
+    public String demoProgress(ModelMap map) {
+        map.addAttribute("title", "Progress");
+        return "demo/progress";
+    }
         
     @RequestMapping("/pdf")
     public String hello(ModelMap map) {
