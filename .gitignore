@@ -6,11 +6,26 @@ a.out
 .settings
 !.mvn/wrapper/maven-wrapper.jar
 
+*/.classpath
+*/.project
+*/.settings/
+*/target/
+!*/.mvn/wrapper/maven-warpper.jar
+
 .metadata/
 .recommenders/
 
 image/target/
+!image/.mvn/wrapper/maven-wrapper.jar
+
 itext/target/
+!itext/.mvn/wrapper/maven-wrapper.jar
+
 springbootdemo/logs/
 springbootdemo/target/
+!springbootdemo/.mvn/wrapper/maven-wrapper.jar
 springbootdemo/applog/
+
+thirdFFI/target
+!thirdFFI/.mvn/wrapper/maven-wrapper.jar
+
