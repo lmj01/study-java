@@ -14,3 +14,15 @@ mj.incDate = (a,b)=>{
 }
 // uuid replace
 mj.uuid = (uuidv1)=>{return uuidv1.replace(new RegExp('-','gi'), '');}
+// to file
+mj.save2File = (blobData, nameFile, type)=>{
+	//type = type || 'text/plain';
+	type = type || 'application/octet-stream';
+	let blob = new Blob([blobData], {
+		type: type
+	});
+	var link = document.createElement('a');
+	link.href = URL.createObjectURL(blob);
+	link.download = nameFile;
+	link.click();
+}

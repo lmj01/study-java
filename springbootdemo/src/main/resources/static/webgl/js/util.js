@@ -1,13 +1,5 @@
 let mj = window.mj || {};
 
-mj.rad2deg = function(rad) {
-	return Math.PI / 180.0 * rad;
-}
-
-mj.deg2rad = function(deg) {
-	return 180.0 / Math.PI * deg;
-}
-
 /*
  * https://stackoverflow.com/questions/2866350/move-camera-to-fit-3d-scene
  * http://www.realtimerendering.com/udacity/transforms.html
@@ -15,8 +7,17 @@ mj.deg2rad = function(deg) {
 mj.fitCamera = function(camera, geometry) {
 	geometry.computeBoundingBox();
 	let bbox = geometry.boundingBox;
-	let center = new THREE.Vector3();
-	bbox.getCenter(center);	
+	let target = new THREE.Vector3();
+	bbox.getCenter(target);	
+	console.log('target position---', target);
+	
+	let distance = target.clone().distanceTo(camera.position);
+	console.log('camera to target distnace---', distance);
+	
+	var vFOV = THREE.Math.degToRad(camera.fov);
+	var height = 2 * Math.tan(vFOV / 2) * distance;
+	var width = height * camera.aspect;
+	console.log('fit camera-------',width, height);	
 }
 
 /*
