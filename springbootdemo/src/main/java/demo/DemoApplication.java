@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 @SpringBootApplication
 @EnableConfigurationProperties({ConfigBean.class})
@@ -31,6 +32,15 @@ public class DemoApplication {
 		if (logger.isErrorEnabled()) {
 			logger.error("test---error message");
 		}
+		
+//		try {
+//			ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("beanConfig.xml");
+//			SimpleBean bean = context.getBean(SimpleBean.class);
+//			bean.send();
+//			context.close();
+//		} catch(Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 }

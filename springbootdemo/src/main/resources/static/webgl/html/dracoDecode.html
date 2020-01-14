@@ -3,12 +3,12 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>Draco | Decode</title>
-	<script type="text/javascript" src="vendors/threejs/three.js"></script>
-	<script type="text/javascript" src="vendors/threejs/OrbitControls.js"></script>
-	<script type="text/javascript" src="vendors/threejs/STLExporter.js"></script>
-	<script type="text/javascript" src="vendors/threejs/DRACOLoader.js"></script>
-	<script type="text/javascript" src="vendors/vue-2.6.11/vue.min.js"></script>
-	<script type="text/javascript" src="js/util.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/STLExporter.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/DRACOLoader.js"></script>
+	<script type="text/javascript" src="../vendors/vue-2.6.11/vue.min.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
 	<style type="text/css">
 		#container {
 			width:	100%;
@@ -27,11 +27,11 @@
 	<div class="info">
 		<button onclick="exportStl();">export stl file</button>
 	</div>
-	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript" src="../js/app.js"></script>
 	<script>
-		let app, drcFile ='bunny';
+		let app, drcFile ='file';
 		// Configure and create Draco decoder.
-		THREE.DRACOLoader.setDecoderPath( 'vendors/threejs/draco/' );
+		THREE.DRACOLoader.setDecoderPath( '../vendors/threejs/draco/' );
 		THREE.DRACOLoader.setDecoderConfig( { type: 'js' } );
 	
 		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#container' )))
@@ -48,7 +48,7 @@
 			// Ground
 			var plane = new THREE.Mesh(
 				new THREE.PlaneBufferGeometry( 8, 8 ),
-				new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
+				new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010, side: THREE.DoubleSide } )
 			);
 			plane.rotation.x = - Math.PI / 2;
 			plane.position.y = 0.03;
@@ -81,7 +81,7 @@
 				mesh.name = drcFile
 				app.add(mesh);
 				// Release decoder resources.
-				mj.fitCamera(camera, geometry);
+				mj.fitCamera(app, mesh);
 				THREE.DRACOLoader.releaseDecoderModule();	
 			} );
 				

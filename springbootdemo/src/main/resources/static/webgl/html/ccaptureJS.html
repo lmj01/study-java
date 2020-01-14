@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>CCapture | Demo</title>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/ccatpure.js/CCapture.all.min.js"></script>
+	<style type="text/css">
+		#container {
+			width:	100%;
+			height: 100%;
+		}
+		.info {
+			top: 10px;
+			left: 40%;
+			position: absolute;
+			z-index: 50;
+		}
+	</style>	
+</head>
+<body>
+	<div id="container"></div>
+	<div class="info">
+		<button onclick="startCapture();">start capture</button>
+		<button onclick="stopCapture();">stop capture</button>
+	</div>
+	<script type="text/javascript" src="../js/app.js"></script>
+	<script type="text/javascript" src="../../js/util.js"></script>
+	<script>
+		let app, capturer, isCapturing = false,
+			captureFormat = 
+				//'webm'
+				'png'
+				; 
+		
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#container' )))
+		.then(newApp=>{
+			app = newApp;
+	
+			let camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+			camera.position.set( 1, 400, -1 );
+			app.setCamera(camera);
+			
+			app.scene.background = new THREE.Color( 0x443333 );
+			app.scene.fog = new THREE.Fog( 0x443333, 200, 1000 );
+				
+			// Lights
+			var light = new THREE.HemisphereLight( 0x443333, 0x111122 );
+			app.add(light);
+		
+			let geometry = new THREE.TorusKnotBufferGeometry( 50, 15, 200, 30 ), 
+				material = new THREE.MeshStandardMaterial( { 
+					//color: 0x606060
+					color: 0xff0000
+					} );
+			let mesh = new THREE.Mesh( geometry, material );
+			mesh.castShadow = true;
+			mesh.position.y = 25;
+			mesh.receiveShadow = true;
+			app.add(mesh);
+				
+			var controls = new THREE.OrbitControls( camera, app.renderer.domElement );
+			controls.target.set( 0, 25, 0 );
+			controls.update();
+			
+			window.addEventListener( 'resize', ()=>{
+				app.updateSize(window.innerWidth, window.innerHeight);	
+			}, false );
+	
+			app.render(()=>{
+				
+ 				var timer = Date.now() * 0.0003;
+
+ 				camera.position.x = Math.sin( timer ) * 0.5;
+ 				camera.position.z = Math.cos( timer ) * 0.5;
+  				camera.lookAt( 0, 0.1, 0 );
+  				
+  				if (isCapturing) {
+  					capturer.capture(app.renderer.domElement);
+  				}
+				
+			});			
+			
+			capturer = new CCapture({ 
+				format: captureFormat,
+				framerate: 60,
+				verbose: false
+			});
+			
+		})
+		
+		function startCapture() {
+			isCapturing = true;
+			capturer.start();
+    	}	
+		function stopCapture() {
+			isCapturing = false;
+			capturer.stop();
+			capturer.save((blob)=>{
+				if (captureFormat == 'webm')  mj.save2File(blob, 'test.webm');
+				else if (captureFormat == 'png' || captureFormat == 'jpg') mj.save2File(blob, 'test.tar');
+			});
+		}
+	</script>
+</body>
+</html>

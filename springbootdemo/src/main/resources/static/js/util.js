@@ -14,7 +14,9 @@ mj.incDate = (a,b)=>{
 }
 // uuid replace
 mj.uuid = (uuidv1)=>{return uuidv1.replace(new RegExp('-','gi'), '');}
-// to file
+/*
+ * blob to file
+ */
 mj.save2File = (blobData, nameFile, type)=>{
 	//type = type || 'text/plain';
 	type = type || 'application/octet-stream';

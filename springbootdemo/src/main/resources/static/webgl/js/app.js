@@ -26,8 +26,8 @@ class App {
 		
 		renderer.setAnimationLoop(()=>{
 			const delta = clock.getDelta();
-			if (cb) cb();
 			renderer.render(scene, camera);
+			if (cb) cb();			
 		});
 	}
 	render(cb) {
