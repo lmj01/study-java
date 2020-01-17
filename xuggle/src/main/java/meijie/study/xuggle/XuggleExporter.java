@@ -14,12 +14,14 @@ import com.xuggle.xuggler.IStreamCoder;
 import com.xuggle.xuggler.IVideoPicture;
 import com.xuggle.xuggler.video.ConverterFactory;
 import com.xuggle.xuggler.video.IConverter;
-
+/*
+ * 把数据写入磁盘中
+ */
 public class XuggleExporter {
 	private static final int MIN_BITRATE = 2000000;
 	private static final double BPP = 1;
 	
-	private IMediaWriter movieWriter;
+	private IMediaWriter mediaWriter;
 	private IConverter converter;
 	private long frameNo;
 	private double deltat;
@@ -29,15 +31,13 @@ public class XuggleExporter {
 		IRational frameRate = IRational.make(fps, 1);
 		deltat = 1e6 / frameRate.getDouble();
 		
-		this.movieWriter = ToolFactory.makeWriter(path);
-		// .CODEC_ID_MPEG4
-		// .CODEC_ID_H264
-		this.movieWriter.addVideoStream(0, 0, ICodec.ID.CODEC_ID_MPEG4, w, h);
+		this.mediaWriter = ToolFactory.makeWriter(path);
+		this.mediaWriter.addVideoStream(0, 0, ICodec.ID.CODEC_ID_MPEG4, w, h);
 		
 		IPixelFormat.Type pixFmt = IPixelFormat.Type.YUV420P;
 		this.converter = ConverterFactory.createConverter(ConverterFactory.XUGGLER_BGR_24, pixFmt, w, h);
 		
-		IContainer container = this.movieWriter.getContainer();
+		IContainer container = this.mediaWriter.getContainer();
 		IStreamCoder coder = container.getStream(0).getStreamCoder();
 		coder.setBitRate(bitRate);
 		coder.setFrameRate(frameRate);
@@ -79,12 +79,12 @@ public class XuggleExporter {
 		IVideoPicture frame = this.converter.toPicture(image, (long)(this.frameNo * this.deltat));
 		frame.setQuality(0);
 		
-		this.movieWriter.encodeVideo(0, frame);
+		this.mediaWriter.encodeVideo(0, frame);
 		this.frameNo++;
 	}
 	
 	public void close() throws Exception {
-		this.movieWriter.close();
+		this.mediaWriter.close();
 		this.converter.delete();
 	}
 }

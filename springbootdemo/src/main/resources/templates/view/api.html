@@ -4,6 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title th:text="${title}"></title>
 	<script type="text/javascript" src="../js/common.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
 	<style>iframe{display:none}</style>
 </head>
 <body>
@@ -22,6 +23,9 @@
 	</fieldset>
 </form>
 <iframe name="emptyframe" id="id-emptyframe" src="" width="0" height="0"></iframe>
+<section>
+	<div><button onclick="downloadMp4();">下载视频</button></div>
+</section>
 </body>
 <script>
 	(function(){
@@ -29,23 +33,23 @@
 		document.getElementById('btn-postapi').addEventListener('click', e=>{
 			mjpost('/api/url?code=3', null, 'json')
 			.then(res=>{
-				console.log('success', res);
+				mjok(res);
 			}, res=>{
-				console.log('not success',res);
+				mjfail(res);
 			})
 		});
 		
 		document.getElementById('btn-postjson').addEventListener('click', e=>{
 			mjpost('/api/json', {code:2,message:'url with json'}, 'json')
 			.then(res=>{
-				console.log('success', res);
+				mjok(res);
 			}, res=>{
-				console.log('not success',res);
+				mjfail(res);
 			})
 		});
 		
 		document.getElementById('id-emptyframe').addEventListener('load', e=>{
-			console.log(e);
+			mjlog(e);			
 		});
 		
 	})()
@@ -55,10 +59,19 @@
 		console.log(data);
 		mjpost('/api/form', data, 'formdata')
 		.then(res=>{
-			console.log('success', res);
+			mjok(res);
 		}, res=>{
-			console.log('not success',res);
+			mjfail(res);
 		});
+	}
+	function downloadMp4() {
+		mjpost('/api/mp4?uuid=1', {uuid:'test-uuid'}, 'arraybuffer')
+		.then(res=>{
+			mjok(res);
+			mj.save2File(res,"test.mp4");
+		}, res=>{
+			mjfail(res);
+		})
 	}
 </script>
 </html>

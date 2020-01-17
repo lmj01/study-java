@@ -1,11 +1,15 @@
 package demo.controllers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import common.Util;
 import demo.entity.Greeting;
 import demo.vo.InData;
-import demo.vo.InUserData;
 import demo.vo.RetData;
 
 /**
@@ -29,6 +32,7 @@ import demo.vo.RetData;
 
 
 @RestController
+@RequestMapping("/api")
 public class ApiController {
 
 	@Value("${title}")
@@ -39,7 +43,7 @@ public class ApiController {
 	private static final String template = "Hello, %s!";
 	private final AtomicLong counter = new AtomicLong();
 	
-	@RequestMapping("/api/greeting")
+	@RequestMapping("/greeting")
 	public Greeting greeting(@RequestParam(value="name", defaultValue="World")String name) {
 		System.out.println("get greeting---");
 		return new Greeting(counter.incrementAndGet(), String.format(template, name));
@@ -47,7 +51,7 @@ public class ApiController {
 	
 	@ResponseBody
     //@RequestMapping(value="/api/url?code=3", method=RequestMethod.POST, produces="application/json")
-	@RequestMapping(value="/api/url", method=RequestMethod.POST)
+	@RequestMapping(value="/url", method=RequestMethod.POST)
     public RetData getApiData(@RequestParam Integer code) {
     	
 		RetData ret = new RetData();
@@ -61,7 +65,7 @@ public class ApiController {
 	
 
 	@ResponseBody
-    @RequestMapping(value="/api/json", method=RequestMethod.POST, produces="application/json")
+    @RequestMapping(value="/json", method=RequestMethod.POST, produces="application/json")
     public RetData getJsonData(@RequestBody(required=false) InData inData) {
     	
     	RetData ret = new RetData();
@@ -73,13 +77,12 @@ public class ApiController {
     }
     
 
-    @RequestMapping(value="/api/form", consumes="multipart/form-data", method=RequestMethod.POST, produces="application/json")
-    //public String getFormData(@RequestBody(required=false) InUserData inData) {
+    @RequestMapping(value="/form", consumes="multipart/form-data", method=RequestMethod.POST, produces="application/json")
     public String getFormData(@RequestParam(value="name", required=true) final String name,
     						  @RequestParam(value="password", required=true) final String password,
     						  @RequestParam("docFiles") List<MultipartFile> docFiles) {
     	
-    	HttpHeaders headers = Util.getHttpHeaders();
+    	//HttpHeaders headers = Util.getHttpHeaders();
     	
     	//String inStr = String.format("post in user data --------%s, %s", inData.getName(), inData.getPassword());
     	//logger.info(inStr);
@@ -88,5 +91,25 @@ public class ApiController {
     	logger.info(inStr);
     	
     	return "ok";
+    }
+    
+    @RequestMapping(value="/mp4", method=RequestMethod.POST, produces="application/octet-stream")
+    @ResponseBody
+    public byte[] getVideo(@RequestParam("uuid") String uuid) {
+    	
+    	logger.info(uuid);	
+		try {
+			ClassPathResource mp4File = new ClassPathResource("static/videos/test.mp4");
+			File file = mp4File.getFile();
+			byte[] bytes = new byte[(int)file.length()];
+			FileInputStream fileStream = new FileInputStream(file);
+			fileStream.read(bytes);
+			fileStream.close();
+			return bytes;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}    		
+		return null;
     }
 }

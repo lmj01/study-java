@@ -11,11 +11,11 @@
 			z-index:50;
 		}
 	</style>
-	<script type="text/javascript" src="vendors/threejs/three.js"></script>
-	<script type="text/javascript" src="vendors/threejs/DracoExporter.js"></script>
-	<script type="text/javascript" src="vendors/threejs/OrbitControls.js"></script>
-	<script type="text/javascript" src="vendors/threejs/draco/draco_encoder.js"></script>
-	<script type="text/javascript" src="vendors/vue-2.6.11/vue.min.js"></script>	
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/DracoExporter.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/draco/draco_encoder.js"></script>
+	<script type="text/javascript" src="../../vendors/vue-2.6.11/vue.min.js"></script>	
 </head>
 <body>
 	<div class="btn">
@@ -23,7 +23,7 @@
 		<button onclick="createBufferGeometry()">BufferGeometry</button>
 		<button onclick="exportFile()">Export DRC</button>
 	</div>
-	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript" src="../js/app.js"></script>
 	<script type="text/javascript" src="../js/util.js"></script>
 	<script>
 		let app, exporter, meshName = "testname";

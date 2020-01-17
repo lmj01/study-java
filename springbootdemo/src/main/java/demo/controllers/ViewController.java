@@ -38,9 +38,9 @@ public class ViewController {
     }
 	
     
-	// http://localhost:9090/pdf?uuid=1
+	// http://localhost:9090/view/pdf?uuid=1
     @RequestMapping(value="/pdf", method=RequestMethod.GET, produces="application/pdf")
-    public ResponseEntity<InputStreamResource> pdf(@RequestParam("uuid") String uuid) {
+    public ResponseEntity<InputStreamResource> getPdf(@RequestParam("uuid") String uuid) {
     	
     	logger.info(uuid);
     	

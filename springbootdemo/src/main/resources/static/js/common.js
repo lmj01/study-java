@@ -7,6 +7,9 @@ window.mjpost = function(url, args, type) {
 		if (type == 'json') {
 			xhr.responseType = type;
 			xhr.setRequestHeader('Content-Type','application/json');
+		} else if (type == 'arraybuffer') {
+			xhr.responseType = type;
+			xhr.setRequestHeader('Content-Type','application/json');
 		}				
 		xhr.onload = function() {
 			if (this.status == 200) {
@@ -23,4 +26,28 @@ window.mjpost = function(url, args, type) {
 		} else xhr.send();
 	});
 }
-
+window.mjlog = console.log;
+window.mjok = function() {
+	let len = arguments.length;
+	if (len == 1) {
+		console.log('success---', arguments[0]);	
+	} else if (len == 2) {
+		console.log('success---', arguments[0], arguments[1]);
+	} else if (len == 3) {
+		console.log('success---', arguments[0], arguments[1], arguments[2]);
+	} else if (len == 4) {
+		console.log('success---', arguments[0], arguments[1], arguments[2], arguments[3]);
+	}	
+}
+window.mjfail = function() {
+	let len = arguments.length;
+	if (len == 1) {
+		console.log('failure---', arguments[0]);	
+	} else if (len == 2) {
+		console.log('failure---', arguments[0], arguments[1]);
+	} else if (len == 3) {
+		console.log('failure---', arguments[0], arguments[1], arguments[2]);
+	} else if (len == 4) {
+		console.log('failure---', arguments[0], arguments[1], arguments[2], arguments[3]);
+	}	
+}
