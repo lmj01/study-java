@@ -14,13 +14,13 @@ public class App
         
 //        UseDate.test();
         
-//        UseTime.test();
+        UseTime.test();
         
 //        UseChar.test();
         
 //        UseMath.test();
         
-        UseList.test();
+//        UseList.test();
         
 //        Others.test();
     }

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Effect | clipping</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		.test {
+			width: 40%;
+			top: 100px;
+			left: 200px;
+			position: relative;
+		}
+		.clip-container {
+			margin:auto
+			box-sizing: content-box;
+			z-index:0;
+			overflow:hidden;
+			position: relative;
+			user-select:none;
+			height: 267px;
+			max-width: 1100px;
+			width: 100%;
+		}
+		.clip-container * {
+			box-sizeing: content-box;
+		}
+		img {
+			border: 0;
+			vertical-align: middle;
+		}
+		.clip-container img {
+			position: absolute;
+			top: 0;
+			display: block;
+			width: 100%;
+			height: auto;
+		}
+		.clip-before {
+			z-index: 20;
+ 			clip: rect(0px, 273.672px, 267px, 0px); 
+/* 			clip-path: rect(0px, 273.672px, 267px, 0px); */
+		}
+		.clip-after {
+			z-index: 10;
+		}
+		.clip-overlay {
+			transition-property: background;
+			background: transparent;
+			z-index: 25;
+		}
+		.clip-overlay,
+		.clip-before-label,
+		.clip-after-label {
+			transition-duration: 0.5s;
+			position: absolute;
+			top: 0;
+			width: 100%;
+			height: 100%;
+		}
+		.clip-handle {
+			height: 60px;
+		    width: 60px;
+		    position: absolute;
+		    left: 50%;
+		    top: 50%;
+		    margin-left: -33px;
+		    margin-top: -40px;
+		    border: 3px solid #fff;
+		    -webkit-border-radius: 1000px;
+		    -moz-border-radius: 1000px;
+		    border-radius: 1000px;
+		    -webkit-box-shadow: 0 0 12px rgba(51,51,51,.2);
+		    -moz-box-shadow: 0 0 12px rgba(51,51,51,.2);
+		    box-shadow: 0 0 12px rgba(51,51,51,.2);
+		    z-index: 40;
+		    cursor: pointer;
+    	}
+    	.clip-left-arrow {
+    		border-right: 6px solid #fff;
+		    left: 50%;
+		    margin-left: -17px;
+    	}
+    	.clip-right-arrow {
+    		border-left: 6px solid #fff;
+		    right: 50%;
+		    margin-right: -17px;
+    	}
+	</style>
+</head>
+<body>
+	<p>clipping image</p>
+	<div class="test">
+		<div class="clip-wrapper clip-horizontal">
+			<div class="clip-container">
+				<img src="/images/test1-800x408.jpg" class="clip-before">
+				<img src="/images/test2-800x408.jpg" class="clip-after">
+			</div>
+			<div class="cliip-overlay">
+				<div class="clip-before-label"></div>
+				<div class="clip-after-label"></div>
+			</div>
+			<div class="clip-handle">
+				<span class="clip-left-arrow"></span>
+				<span class="clip-right-arrow"></span>
+			</div>	
+		</div>
+	</div>
+	<script>
+		
+	</script>
+</body>
+</html>

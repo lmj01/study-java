@@ -1,6 +1,9 @@
 package com.meijie.study.language;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class UseTime {
@@ -26,14 +29,15 @@ public class UseTime {
 
 	public static void test() {
 		UseTime ut = new UseTime();
-		
+		LocalTime timeNow = LocalTime.now();
+		LocalDateTime dt = LocalDateTime.now();
 		ut.setToday(LocalDate.now());
 		
 		String res = String.format("now is %s, %s", 
 				ut.getToday().toString(), 
 				ut.toString()
 		);		
-				
+		System.out.println(String.format("%s--%d", timeNow.toString(), dt.toInstant(ZoneOffset.ofHours(8)).toEpochMilli()));		
 		System.out.println(res);
 		
 	}
