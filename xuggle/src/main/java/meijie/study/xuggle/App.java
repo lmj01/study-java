@@ -30,13 +30,16 @@ public class App
         	
         	//FFmpeg2.test(tarFile, ".\\test3.mp4");
         	
-        	FFmpeg3 ff3 = new FFmpeg3();
-        	ff3.probeMp4();
-        	ff3.createVideo();
-        	ff3.createVideo1();
+//        	FFmpeg3 ff3 = new FFmpeg3();
+        	//ff3.probeMp4();
+//        	ff3.createVideo();
+//        	ff3.createVideo1();
         	
 //        	FFmpeg4 ff4 = new FFmpeg4();
 //        	ff4.readImageFromVideo("./test3.mp4");
+        	
+        	FFmpeg5 ff5 = new FFmpeg5("./test5.mp4");
+        	ff5.imageFile2Video(tarFile);
         	
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
