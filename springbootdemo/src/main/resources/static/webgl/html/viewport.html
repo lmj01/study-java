@@ -167,15 +167,6 @@
 				controls.target.set( 0, 25, 0 );
 				controls.update();	
 			}
-									
-			window.addEventListener( 'resize', ()=>{
-				windownResize(camera, app);
-// 				if (camera.isArrayCamera) {
-					
-// 				} else {
-// 					app.updateSize(window.innerWidth, window.innerHeight);	
-// 				}					
-			}, false );
 	
 			app.render(()=>{
 				
@@ -190,7 +181,10 @@
   				if (isCapturing) {
   					capturer.capture(app.renderer.domElement);
   				}
+  				app.renderDefault();
 				
+			}, ()=>{
+				windownResize(camera, app);
 			});			
 			
 			capturer = new CCapture({ 

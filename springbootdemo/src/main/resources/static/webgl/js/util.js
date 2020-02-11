@@ -42,6 +42,7 @@ mj.fitCamera = function(app, mesh) {
 	
 	mesh.scale.setScalar(scale1);	
 }
+mj.tanHalf = (deg) => { return Math.tan(THREE.Math.DEG2RAD * deg / 2) }
 /*
  * blob to file
  */

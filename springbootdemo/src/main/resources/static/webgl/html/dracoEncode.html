@@ -81,13 +81,11 @@
 			var controls = new THREE.OrbitControls( camera, app.renderer.domElement );
 			controls.target.set( 0, 25, 0 );
 			controls.update();
-	
-			window.addEventListener( 'resize', ()=>{
-				app.updateSize(window.innerWidth, window.innerHeight);
-			}, false );
-			
-			app.render(()=>{
 				
+			app.render(()=>{
+				app.renderDefault();
+			}, ()=>{
+				app.updateSize(window.innerWidth, window.innerHeight);
 			});			
 			
 		});
