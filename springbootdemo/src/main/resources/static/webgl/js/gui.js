@@ -20,3 +20,10 @@ class MinMaxGUIHelper {
 		this.min = this.min; // this will call the min setter
 	}
 }
+
+class GuiOption {
+	constructor() {
+		this.views = ['1 view','2 view','3 view','4 view', '5 view'];
+		this.view = this.views[0];
+	}
+}

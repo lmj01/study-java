@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Viewport | Demo</title>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
+	<style type="text/css">
+		html, body {
+		  margin: 0;
+		  height: 100%;
+		}
+		#c {
+		  width: 100%;
+		  height: 100%;
+		  display: block;
+		}
+	</style>	
+</head>
+<body>
+	<canvas id="c"></canvas>
+	<script type="text/javascript" src="../js/app.js"></script>
+	<script type="text/javascript" src="../js/gui.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+	<script>		
+		let app;
+		let arrayCamera = [], arrayVp = [
+			[{x:0, y:0, w:1, h:1}],
+			[{x:0, y:0, w:0.5, h:1}, {x:0.5, y:0, w:0.5, h:1}],
+			[{x:0, y:0, w:1/3, h:1}, {x:1/3, y:0, w:1/3, h:1}, {x:2/3, y:0, w:1/3, h:1}],
+			[{x:0, y:0.5, w:0.5, h:0.5}, {x:0.5, y:0.5, w:0.5, h:0.5}, {x:0, y:0.0, w:0.5, h:0.5}, {x:0.5, y:0, w:0.5, h:0.5}],
+			[{x:0, y:0.5, w:1/3, h:0.5}, {x:1/3, y:0.5, w:1/3, h:0.5}, {x:2/3, y:0.5, w:1/3, h:0.5}, {x:0, y:0, w:0.5, h:0.5}, {x:0.5, y:0, w:0.5, h:0.5}],
+		], loc = 0, sceneColor = [
+			0x443333,
+			0x010f40,
+			0x002040,
+			0x004040,
+			0x040040
+		];
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#c' )))
+		.then(newApp=>{
+			app = newApp;				
+			const {renderer, scene} = app;
+			
+			const fov = 75,
+				aspect = window.innerWidth / window.innerHeight,
+				near = 0.1,
+				far = 10000;
+			
+			let guiOption = new GuiOption();
+			
+			const gui = new dat.GUI(), size = 10, czoom = 0.2;
+			let count = 1;
+			gui.add(guiOption, 'view', guiOption.views).onFinishChange((val)=>{
+				loc = parseInt(val[0])-1;
+			});
+			count = 5;
+			for (let i=0; i<count;i++) {
+				arrayCamera.push(new THREE.OrthographicCamera(-size, size, size, -size, size, -size));
+			}
+			
+			//const controls = new THREE.OrbitControls(arrayCamera[0], renderer.domElement);
+			//controls.target.set(0, 5, 0);
+			//controls.update();
+			
+			scene.background = new THREE.Color( 0x443333 );
+			
+			app.addDefault();
+			
+			  {
+				  
+				  let axesHelper =  new THREE.AxesHelper(50);
+				  app.add(axesHelper);
+				  
+				  //for (let i=0;i<count;i++)  updateCameraPosition(i);
+			  }
+			  
+			  function updateCameraPosition(pos) {
+				  let camera = arrayCamera[pos];
+				  const {center, size} = app.getBox();
+				  let maxLen = Math.max(size.x, Math.max(size.y, size.z)),
+						distance = maxLen / (2 * mj.tanHalf(fov));
+				
+				  if (camera.isPerspectiveCamera) {
+					  camera.position.set(center.x, center.y, center.z - distance);
+					camera.position.z *= Math.sqrt(3);
+					camera.lookAt(center.x,  center.y, center.z);  
+				  } else {
+					  let aspect = app.fullWidth / app.fullHeight;
+						camera.left = -distance * aspect;
+						camera.right = distance * aspect;
+						camera.top = distance;
+						camera.bottom = -distance;
+				  }
+			  }
+			  
+			  function setScissorForElement(pos) {
+				const {x,y,w,h} = arrayVp[loc][pos];
+				const {fullWidth, fullHeight} = app;
+
+			    const left = Math.floor(x * fullWidth);
+			    const top = Math.floor(y * fullHeight);
+			    const width = Math.floor(w * fullWidth);
+			    const height = Math.floor(h * fullHeight);
+			    renderer.setScissor(left, top, width, height);
+			    renderer.setViewport(left, top, width, height);
+			    
+			    return width / height;
+			  }
+			  
+			  function renderViewport(pos) {
+				  const aspect = setScissorForElement(pos);
+			
+			      scene.background.set(sceneColor[pos]);
+			      
+			      // render
+			      renderer.render(scene, arrayCamera[pos]);
+			  }
+			  
+			app.render(()=>{
+				// render
+				
+				// turn on the scissor
+			    renderer.setScissorTest(true);
+			
+				for (let i=0;i<loc+1;i++) {
+					renderViewport(i);
+				}
+			    
+			}, ()=>{
+				// resize 
+				
+			});			
+			
+		});
+	</script>
+</body>
+</html>

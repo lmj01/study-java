@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Viewport | Demo</title>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
+	<style type="text/css">
+		html, body {
+		  margin: 0;
+		  height: 100%;
+		}
+		#c {
+		  width: 100%;
+		  height: 100%;
+		  display: block;
+		}
+		.split {
+		  position: absolute;
+		  left: 0;
+		  top: 0;
+		  width: 100%;
+		  height: 100%;
+		  display: flex;
+		  flex-flow: row wrap;
+		  justify-content: space-around;
+		}
+		.split.one > div {
+		  width: 100%;
+		  height: 100%;
+		}
+		.split.two > div {
+			width:50%;
+			height: 100%;
+		}
+		.split.three > div {
+			width: 33.3%;
+			height: 100%;
+		}
+		.split.four > div {
+			width: 50%;
+			height: 50%;			
+		}
+		.split.five > div {
+			width: 33.3%;
+			height: 50%;
+		}
+		.split.five > div:nth-child(n+4) {
+			width: 50%;
+		}
+	</style>	
+</head>
+<body>
+	<canvas id="c"></canvas>
+    <div class="split one" id="splitter">
+       <div></div>
+    </div>
+	<script type="text/javascript" src="../js/app.js"></script>
+	<script type="text/javascript" src="../js/gui.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+	<script>		
+		let app;
+		let arrayCamera = [];
+		const elSplitter = document.querySelector('#splitter');
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#c' )))
+		.then(newApp=>{
+			app = newApp;				
+			
+			const fov = 75,
+				aspect = window.innerWidth / window.innerHeight,
+				near = 0.1,
+				far = 10000;
+			
+			let guiOption = new GuiOption();
+			
+			const gui = new dat.GUI();
+			gui.add(guiOption, 'view', guiOption.views).onFinishChange((val)=>{
+				let count = parseInt(val[0]), i = arrayCamera.length;	
+				if (i==1) elSplitter.classList.remove('one');
+				else if (i==2) elSplitter.classList.remove('two');
+				else if (i==3) elSplitter.classList.remove('three');
+				else if (i==4) elSplitter.classList.remove('four');
+				else if (i==5) elSplitter.classList.remove('five');
+				if (i < count) {
+					let size = 100, czoom = 0.2, sum = count - i;
+					for (;i<count;i++) {
+						arrayCamera.push ( new THREE.OrthographicCamera(-size, size, size, -size, near, far/10) );
+						arrayCamera[i].zoom = czoom;					
+					}		
+				} else {
+					arrayCamera.length = count;
+				}
+				if (count==1) elSplitter.classList.add('one');
+				else if (count==2) elSplitter.classList.add('two');
+				else if (count==3) elSplitter.classList.add('three');
+				else if (count==4) elSplitter.classList.add('four');
+				else if (count==5) elSplitter.classList.add('five');
+				elSplitter.innerHTML = '<div></div>'.repeat(count);
+			    console.log('---', val, guiOption.view, parseInt(val[0]));
+			});
+			
+			
+			arrayCamera.push( new THREE.PerspectiveCamera(fov, aspect, near, far) );
+			app.setCamera(arrayCamera[0]);
+			
+			const controls = new THREE.OrbitControls(arrayCamera[0], elSplitter.children[0]);
+			//controls.target.set(0, 5, 0);
+			controls.update();
+			
+			app.scene.background = new THREE.Color( 0x443333 );
+			
+			const renderer = app.renderer;
+			const scene = app.scene;
+			const canvas = renderer.domElement;
+		    
+			app.addDefault();
+			
+			  {
+				  
+				  let axesHelper =  new THREE.AxesHelper(50);
+				  app.add(axesHelper);
+				  
+				  const {center, size} = app.getBox();
+				  let maxLen = Math.max(size.x, Math.max(size.y, size.z)),
+						distance = maxLen / (2 * mj.tanHalf(fov));
+				
+				   console.log('data info---', size, center, distance);
+									
+					//camera.position.set(center.x, center.y, center.z - distance);
+					arrayCamera[0].position.set(center.x, center.y, center.z - distance);
+					arrayCamera[0].position.z *= Math.sqrt(3);
+					arrayCamera[0].lookAt(center.x,  center.y, center.z);
+					
+			  }
+			  
+			  function setScissorForElement(elem) {
+				const canvasRect = canvas.getBoundingClientRect();
+			    const elemRect = elem.getBoundingClientRect();
+
+			    // compute a canvas relative rectangle
+			    const right = Math.min(elemRect.right, canvasRect.right) - canvasRect.left;
+			    const left = Math.max(0, elemRect.left - canvasRect.left);
+			    const bottom = Math.min(elemRect.bottom, canvasRect.bottom) - canvasRect.top;
+			    const top = Math.max(0, elemRect.top - canvasRect.top);
+
+			    const width = Math.min(canvasRect.width, right - left);
+			    const height = Math.min(canvasRect.height, bottom - top);
+
+			    // setup the scissor to only render to that part of the canvas
+			    const positiveYUpBottom = canvasRect.height - bottom;
+			    //console.log('---', elem.id, left, positiveYUpBottom, width, height);
+			    renderer.setScissor(left, positiveYUpBottom, width, height);
+			    renderer.setViewport(left, positiveYUpBottom, width, height);
+
+			    // return the aspect
+			    return width / height;
+			  }
+			  
+			app.render(()=>{
+				// render
+				
+				// turn on the scissor
+			    renderer.setScissorTest(true);
+			
+			    // render the original view
+			    if (elSplitter.children.length > 0)
+			    {
+			    	const elTarget = elSplitter.children[0];
+			      const aspect = setScissorForElement(elTarget);
+			
+			      // adjust the camera for this aspect
+			      arrayCamera[0].aspect = aspect;
+			      arrayCamera[0].updateProjectionMatrix();
+			 
+			      scene.background.set(0xff0ff000);
+			      
+			      // render
+			      renderer.render(scene, arrayCamera[0]);
+			    }
+			
+			    // render from the 2nd camera
+			    if (elSplitter.children.length > 1)
+			    {
+			    	const elTarget = elSplitter.children[1];
+			      const aspect = setScissorForElement(elTarget);
+			
+			      app.updateCameraType(arrayCamera[1], "top");
+			
+			      scene.background.set(0x000040);
+			
+			      renderer.render(scene, arrayCamera[1]);
+			    }
+			
+				// render from the 3nd camera
+				if (elSplitter.children.length > 2)
+			    {
+				  const elTarget = elSplitter.children[2];
+			      const aspect = setScissorForElement(elTarget);
+
+			      app.updateCameraType(arrayCamera[2], "front");
+			      
+			      scene.background.set(0x000040);
+			
+			      renderer.render(scene, arrayCamera[2]);
+			    }
+			
+			 	// render from the forth camera
+			 	if (elSplitter.children.length > 3)
+			    {
+			    	const elTarget = elSplitter.children[3];
+			      const aspect = setScissorForElement(elTarget);
+			
+			      app.updateCameraType(arrayCamera[3], "right");
+			      
+			      scene.background.set(0x000040);
+			
+			      renderer.render(scene, arrayCamera[3]);
+			    }
+			
+			 	// render from the forth camera
+			 	if (elSplitter.children.length > 4)
+			    {
+			    	const elTarget = elSplitter.children[4];
+			      const aspect = setScissorForElement(elTarget);
+			
+			      app.updateCameraType(arrayCamera[4], "right");
+			      
+			      scene.background.set(0x000040);
+			
+			      renderer.render(scene, arrayCamera[4]);
+			    }
+			
+			}, ()=>{
+				// resize 
+				
+			});			
+			
+		});
+	</script>
+</body>
+</html>

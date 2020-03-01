@@ -6,6 +6,11 @@ class App {
 		this.scene = scene;
 		this.clock = new THREE.Clock();
 		this.camera = null;
+		this.cbRender = null;
+		this.cbResize = null;
+		if (signals && signals.Signal) {
+			this.animateHandle = new signals.Signal();
+		}
 		
 		if ((container instanceof HTMLElement)) {
 			if ((container instanceof HTMLCanvasElement)) {
@@ -28,34 +33,67 @@ class App {
 		}
 		
 	}
-	__init(cbRender, cbCamera) {
+	__init() {
 		const {scene, camera, renderer, clock
 			, fullWidth, fullHeight
+			, control, cbRender, cbResize
 		} = this;
 		
 		if (fullWidth > 0) {
 			renderer.setSize(fullWidth, fullHeight);				
 		}
-		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.gammaInput = true;
-		renderer.gammaOutput = true;
-		renderer.shadowMap.enabled = true;
 		
 		renderer.setAnimationLoop(()=>{
 			const delta = clock.getDelta();
 			if (this.needResize()) {
-				if (cbCamera) cbCamera();
+				if (cbResize) cbResize();
 			}
 			if (cbRender) cbRender(delta);
 			else renderDefault();
+			if (control) control.update();
 		});
 	}
-	render(cbRender, cbCamera) {
-		this.__init(cbRender, cbCamera);		
+	controlUpdate() {
+		const {control} = this;
+		function update() {
+			requestAnimationFrame(update);
+			if (control) control.update();	
+		}
+		update();
+	}
+	renderFrame() {
+		const { cbResize, cbRender } = this;
+		
+		const delta = this.clock.getDelta();
+		
+		if (this.needResize()) {
+			if (cbResize) cbResize();
+		}
+		
+		if (this.animateHandle) {
+			this.animateHandle.dispatch();				
+		}
+		
+		if (cbRender) cbRender(delta);
+		else this.renderDefault();
+	}
+	
+	renderCallback(cbRender, cbResize) {
+		const {renderer} = this;
+		this.cbRender = cbRender;
+		this.cbResize = cbResize;
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.gammaInput = true;
+		renderer.gammaOutput = true;
+		renderer.shadowMap.enabled = true;		
+	}
+	renderLoop() {
+		this.__init();
 	}	
 	renderDefault() {
 		const {renderer, scene, camera} = this;
 		if (camera) {
+			renderer.clear();
 			renderer.render(scene, camera);	
 		}
 	}
@@ -66,7 +104,7 @@ class App {
 			height = canvas.clientHeight;
 		const isChange = canvas.width !== width || canvas.height !== height;
 		if (isChange) {
-			console.log('------need resize', width, height);			
+			//console.log('------need resize', width, height);			
 			this.fullWidth = width;
 			this.fullHeight = height;
 			renderer.setSize(width, height, false);
@@ -87,21 +125,19 @@ class App {
 	setCamera(camera) {
 		this.camera = camera;
 	}
+	setControl(control) {
+		this.control = control;
+	}
+	setRenderOption(opt) {
+		
+	}
 	add(obj3D) {
 		const {scene} = this;
-//		if (obj3D.isObject3D) {
-			scene.add(obj3D);	
-//		} else {
-//			throw new Error("not Object3D object");
-//		}		
+		scene.add(obj3D);
 	}
 	remove(obj3D) {
 		const {scene} = this;
-//		if (obj3D.isObject3D) {
-			scene.remove(obj3D);	
-//		} else {
-//			throw new Error("not Object3D object");
-//		}		
+		scene.remove(obj3D);
 	}
 	getBox() {
 		const {scene} = this;
@@ -150,16 +186,102 @@ class App {
 		visitObject3D(scene, box);
 //		box = visitObject3D_2(scene);
 //		console.log('--1-', box);
-		let boxHelper = new THREE.BoxHelper(scene, 0xff0000);
-		boxHelper.update();
-		this.add(boxHelper);
+//		let boxHelper = new THREE.BoxHelper(scene, 0xff0000);
+//		boxHelper.update();
+//		this.add(boxHelper);
 //		boxHelper.geometry.computeBoundingBox();
 //		box = boxHelper.geometry.boundingBox;
 //		console.log('--2-', box);
-		return box;
+		
+		let center = new THREE.Vector3(), size = new THREE.Vector3();
+		box.getCenter(center);
+		box.getSize(size);
+		
+		return {center:center, size:size};
 	}
 	findMesh(name) {
 		const {scene} = this;
 		return scene.children.filter(e=>e.name==name)[0];
+	}
+	updateCameraType(camera, side, fov) {
+		  fov = fov || 45;
+		  const disFactor = Math.sqrt(3); // sqrt3 or sqrt2
+		  const {center, size} = app.getBox();
+		  let isPerspective = camera.isPerspectiveCamera;
+		  let maxLen = Math.max(size.x, Math.max(size.y, size.z));
+		  let distance =  isPerspective ? maxLen / (2 * mj.tanHalf(fov)) : maxLen * 2;
+		
+			let newPos = new THREE.Vector3(center.x, center.y, center.z),
+		  	newUp = new THREE.Vector3(0,1,0),
+		  	viewDir = new THREE.Vector3();
+		  
+		  if (side == "front") {
+			  // x/y plane				
+			  viewDir.set(0,0,1);
+			  newPos.z = viewDir.multiplyScalar(distance).z;
+			  if (isPerspective) newPos.z *= disFactor;
+		  } else if (side == "back") {
+			// x/y plane				
+			  viewDir.set(0,0,-1);
+			  newPos.z = viewDir.multiplyScalar(distance).z;
+			  if (isPerspective) newPos.z *= disFactor;
+		  } else if (side == "left") {
+			  // z/y plane
+			  viewDir.set(-1, 0, 0);
+			  newPos.x = viewDir.multiplyScalar(distance).x;
+			  if (isPerspective) newPos.x *= disFactor;
+		  } else if (side == "right") {
+			// z/y plane
+			  viewDir.set(1, 0, 0);
+			  newPos.x = viewDir.multiplyScalar(distance).x;
+			  if (isPerspective) newPos.x *= disFactor;
+		  } else if (side == "top") {
+			  // z/x plane
+			  viewDir.set(0, 1, 0);
+			  newUp.set(0,1,0);
+			  newPos.y = viewDir.multiplyScalar(distance).y;
+			  if (isPerspective) newPos.y *= disFactor;
+		  } else if (side == "bottom") {
+			// z/x plane
+			  viewDir.set(0, -1, 0);
+			  newUp.set(0,1,0);
+			  newPos.y = viewDir.multiplyScalar(distance).y;
+			  if (isPerspective) newPos.y *= disFactor;
+		  }		
+		  
+			camera.position.copy(newPos);
+			camera.up.copy(newUp);
+			//camera.lookAt(center.x,  center.y, center.z);	
+			camera.updateProjectionMatrix();
+	  }
+	addDefault() {
+		{
+		    const cubeSize = 5;
+		    const cubeGeo = new THREE.BoxBufferGeometry(cubeSize, cubeSize, cubeSize);
+		    const cubeMat = new THREE.MeshPhongMaterial({color: '#8AC'});
+		    const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+		    mesh.position.set(2.5, 0, 0);
+		    this.add(mesh);
+		}
+		{
+		    const sphereRadius = 3;
+		    const sphereWidthDivisions = 32;
+		    const sphereHeightDivisions = 16;
+		    const sphereGeo = new THREE.SphereBufferGeometry(sphereRadius, sphereWidthDivisions, sphereHeightDivisions);
+		    const sphereMat = new THREE.MeshPhongMaterial({color: '#CA8'});
+		    const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+		    mesh.position.set(-5, 0, 0);
+		    this.add(mesh);
+		  }
+
+		  {
+		    const color = 0xFFFFFF;
+		    const intensity = 1;
+		    const light = new THREE.DirectionalLight(color, intensity);
+		    light.position.set(0, 10, 0);
+		    light.target.position.set(-5, 0, 0);
+		    this.add(light);
+		    this.add(light.target);
+		  }
 	}
 }

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/STLLoader.js"></script>
+	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>	
+	<script id="vs" type="x-shader/x-vertex">
+void main()
+{
+	vec2 pos = vec2(position.x, position.y);
+	
+	gl_Position = vec4(pos, 0.0, 1.0);
+}
+	</script>
+	<script id="fs" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform vec2 offset;
+uniform vec2 pitch; 
+uniform float scale;
+uniform float delta;
+// Common uniforms
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+uniform float u_frame;
+
+// Constants
+const float M_PI    = 3.14159265358979323846;
+const float M_SQRT2 = 1.41421356237309504880;
+
+
+
+// -------------------------------------------------
+// Forward cartesian projection
+vec2 transform_forward(vec2 P)
+{
+    return P;
+}
+
+// Inverse cartesian projection
+vec2 transform_inverse(vec2 P)
+{
+    return P;
+}
+// -------------------------------------------------
+
+
+
+
+// [-0.5,-0.5]x[0.5,0.5] -> [xmin,xmax]x[ymin,ymax]
+// ------------------------------------------------
+vec2 scale_forward(vec2 P, vec4 limits)
+{
+    // limits = xmin,xmax,ymin,ymax
+    P += vec2(.5,.5);
+    P *= vec2(limits[1] - limits[0], limits[3]-limits[2]);
+    P += vec2(limits[0], limits[2]);
+    return P;
+}
+
+// [xmin,xmax]x[ymin,ymax] -> [-0.5,-0.5]x[0.5,0.5]
+// ------------------------------------------------
+vec2 scale_inverse(vec2 P, vec4 limits)
+{
+    // limits = xmin,xmax,ymin,ymax
+    P -= vec2(limits[0], limits[2]);
+    P /= vec2(limits[1]-limits[0], limits[3]-limits[2]);
+    return P - vec2(.5,.5);
+}
+
+// Antialias stroke alpha coeff
+float stroke_alpha(float distance, float linewidth, float antialias)
+{
+    float t = linewidth/2.0 - antialias;
+    float signed_distance = distance;
+    float border_distance = abs(signed_distance) - t;
+    float alpha = border_distance/antialias;
+    alpha = exp(-alpha*alpha);
+    if( border_distance > (linewidth/2.0 + antialias) )
+        return 0.0;
+    else if( border_distance < 0.0 )
+        return 1.0;
+    else
+        return alpha;
+}
+
+// Compute the nearest tick from a (normalized) t value
+float get_tick(float t, float vmin, float vmax, float step)
+{
+    float first_tick = floor((vmin + step/2.0)/step) * step;
+    float last_tick = floor((vmax + step/2.0)/step) * step;
+    float tick = vmin + t*(vmax-vmin);
+    if (tick < (vmin + (first_tick-vmin)/2.0))
+        return vmin;
+    if (tick > (last_tick + (vmax-last_tick)/2.0))
+        return vmax;
+    tick += step/2.0;
+    tick = floor(tick/step)*step;
+    return min(max(vmin,tick),vmax);
+}
+
+
+
+void main()
+{
+	vec2 fragCoord = vec2(gl_FragCoord.xy);
+	vec4 fragColor = vec4(0.0); 
+ 	// Cartesian limits
+	vec4 u_limits1 = vec4(-10.1, +10.1, -10.1, +10.1)  * .5*(1.+sin(u_time/2.))/2.;
+
+	// Projected limits
+	vec4 u_limits2 = vec4(-10.,10.,-10.,10.); ;
+
+    const float u_antialias = 1.0;
+	vec2 u_major_grid_step = vec2(1.0, 1.0);
+	vec2 u_minor_grid_step = vec2(.1, .1);
+	float u_major_grid_width = 2.00;
+	float u_minor_grid_width = 1.00;
+	vec4  u_major_grid_color = vec4(0,0,0,1);
+	vec4  u_minor_grid_color = vec4(.5,.5,.5,1);
+
+    
+    vec2 v_texcoord;
+    if (u_resolution.x > u_resolution.y) {
+        v_texcoord.x = fragCoord.x/u_resolution.y - 0.5
+                     - 0.5*(u_resolution.x-u_resolution.y)/u_resolution.y;
+        v_texcoord.y = fragCoord.y/u_resolution.y - 0.5;
+	} else {	
+        v_texcoord.x = fragCoord.x/u_resolution.x - 0.5;
+        v_texcoord.y = fragCoord.y/u_resolution.x - 0.5
+                     - 0.5*(u_resolution.y-u_resolution.x)/u_resolution.x;
+    }
+    vec2 v_size = u_resolution.xy;    
+
+    
+    
+    vec2 NP1 = v_texcoord;
+    vec2 P1 = scale_forward(NP1, u_limits1);
+    vec2 P2 = transform_inverse(P1);
+
+    // Test if we are within limits but we do not discard yet because we want
+    // to draw border. Discarding would mean half of the exterior not drawn.
+    bvec2 outside = bvec2(false);
+    if( P2.x < u_limits2[0] ) outside.x = true;
+    if( P2.x > u_limits2[1] ) outside.x = true;
+    if( P2.y < u_limits2[2] ) outside.y = true;
+    if( P2.y > u_limits2[3] ) outside.y = true;
+
+    vec2 NP2 = scale_inverse(P2,u_limits2);
+    vec2 P;
+    float tick;
+
+    tick = get_tick(NP2.x+.5, u_limits2[0], u_limits2[1], u_major_grid_step[0]);
+    P = transform_forward(vec2(tick,P2.y));
+    P = scale_inverse(P, u_limits1);
+    float Mx = length(v_size * (NP1 - P));
+    // float Mx = screen_distance(vec4(NP1,0,1), vec4(P,0,1));
+
+
+    tick = get_tick(NP2.x+.5, u_limits2[0], u_limits2[1], u_minor_grid_step[0]);
+    P = transform_forward(vec2(tick,P2.y));
+    P = scale_inverse(P, u_limits1);
+    float mx = length(v_size * (NP1 - P));
+    // float mx = screen_distance(vec4(NP1,0,1), vec4(P,0,1));
+
+    tick = get_tick(NP2.y+.5, u_limits2[2], u_limits2[3], u_major_grid_step[1]);
+    P = transform_forward(vec2(P2.x,tick));
+    P = scale_inverse(P, u_limits1);
+    float My = length(v_size * (NP1 - P));
+    // float My = screen_distance(vec4(NP1,0,1), vec4(P,0,1));
+
+    tick = get_tick(NP2.y+.5, u_limits2[2], u_limits2[3], u_minor_grid_step[1]);
+    P = transform_forward(vec2(P2.x,tick));
+    P = scale_inverse(P, u_limits1);
+    float my = length(v_size * (NP1 - P));
+    // float my = screen_distance(vec4(NP1,0,1), vec4(P,0,1));
+
+    float M = min(Mx,My);
+    float m = min(mx,my);
+
+    // Here we take care of "finishing" the border lines
+    if( outside.x && outside.y ) {
+        if (Mx > 0.5*(u_major_grid_width + u_antialias)) {
+            fragColor = vec4(1); return;
+        } else if (My > 0.5*(u_major_grid_width + u_antialias)) {
+            fragColor = vec4(1); return;
+        } else {
+            M = max(Mx,My);
+        }
+    } else if( outside.x ) {
+        if (Mx > 0.5*(u_major_grid_width + u_antialias)) {
+            fragColor = vec4(1); return;
+        } else {
+            M = m = Mx;
+        }
+    } else if( outside.y ) {
+        if (My > 0.5*(u_major_grid_width + u_antialias)) {
+            fragColor = vec4(1); return;
+        } else {
+            M = m = My;
+        }
+    }
+
+    // Mix major/minor colors to get dominant color
+    vec4 color = u_major_grid_color;
+    float alpha1 = stroke_alpha( M, u_major_grid_width, u_antialias);
+    float alpha2 = stroke_alpha( m, u_minor_grid_width, u_antialias);
+    float alpha  = alpha1;
+    if( alpha2 > alpha1*1.5 )
+    {
+        alpha = alpha2;
+        color = u_minor_grid_color;
+    }
+
+    fragColor = mix(vec4(1,1,1,1), color, alpha);
+
+	gl_FragColor = vec4(fragColor);
+}
+
+	</script>	
+	<style>
+		html, body {
+		  margin: 0;
+		  height: 100%;
+		}
+		canvas {
+		  width: 100%;
+		  height: 100%;
+		  display: block;
+		  position: absolute;
+		}    
+	</style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <script type="text/javascript" src="../js/app.js"></script>
+    <script type="text/javascript" src="../js/gui.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+    <script>
+        let app;
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#c' )))
+		.then(newApp=>{
+			app = newApp;				
+			
+			let camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+			app.setCamera(camera);
+						
+			app.scene.background = new THREE.Color( 0x443333 );
+			//app.scene.fog = new THREE.Fog( 0x443333, 200, 1000 );
+			//app.scene.background.set(0xff0ff000);
+			
+			const renderer = app.renderer;
+			const scene = app.scene;
+			const canvas = renderer.domElement;
+			
+			renderer.setClearColor(new THREE.Color(0xf0f0f0f0));
+			
+			if (true) {
+	            new THREE.STLLoader().load('../../models/gum.stl', function(geometry) {
+	                let gum = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xffff00}));
+	                gum.name = 'gum';
+	                gum.geometry.computeBoundingBox();
+	                scene.add(gum);
+	            });
+	        }
+			let plane, uniforms = {
+				u_time: {value: 0},
+				u_frame: {value: 0},
+				u_resolution: {value: new THREE.Vector2(app.fullWidth, app.fullHeight).multiplyScalar(window.devicePixelRatio)},
+				u_mouse: {value: new THREE.Vector2(0.7*app.fullWidth, app.fullHeight).multiplyScalar(window.devicePixelRatio)},
+				pitch: {value: new THREE.Vector2(10,10)},
+				scale: {value: 0},
+			};
+		    if (true) {
+		    	let geoPlane = new THREE.PlaneBufferGeometry(2, 2);
+		    	let matPlane = new THREE.ShaderMaterial({
+		    		uniforms: uniforms,
+		    		vertexShader: document.getElementById('vs').textContent.trim(),
+		            fragmentShader: document.getElementById('fs').textContent.trim(),
+		    	});
+		        plane = new THREE.Mesh(geoPlane, matPlane);
+		        app.add(plane);
+		    }
+		    
+		    let axesHelper =  new THREE.AxesHelper(50);
+			app.add(axesHelper);
+			  
+			function toScreenXY(position) {
+				let pos = position.clone();
+				let projScreenMat = new THREE.Matrix4();
+				projScreenMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+				pos.applyMatrix4(projScreenMat);
+				
+				let el = renderer.domElement,
+					offset = screenOffset(renderer.domElement);
+				return {
+					x: (pos.x + 1) * el.width / 2 + offset.left,
+					y: (-pos.y+1) * el.height / 2 + offset.top
+				};					
+		  }
+		  function screenOffset(el) {
+			  let pos = new Object();
+			  pos.left = pos.top = 0;
+			  if (el.offsetParent) {
+				  do {
+					  pos.left += el.offsetLeft;
+					  pos.topp += el.offsetTop;						  
+				  } while(el = el.offsetParent);
+			  }
+			  return pos;
+		  }
+		  let isChange = true, cpos = camera.position.clone();
+		  function eq(x, y) {
+			  return Math.abs(x-y) < 1e-5;
+		  }
+		  function printInfo() {
+			  let p0 = new THREE.Vector3(0,0,0),
+			  	p1 = new THREE.Vector3(1,1,0);
+			  
+			  let s0 = toScreenXY(p0),
+			  	s1 = toScreenXY(p1);
+			  unitX = (s0.x - s1.x) * window.devicePixelRatio;
+			  unitY = unitX; 
+			  console.log('---', unitX, unitY, s0, s1, unit);
+		  }
+		  let unitX = 10, unitY = 10, unit = 1.0;
+		  renderer.domElement.addEventListener('wheel', (event)=>{
+			  //printInfo();
+			  
+			  unit += event.deltaY;
+		  }, false);
+		  
+						  
+	         function updateUniforms(delta) {
+               let lenX = camera.zoom * Math.abs(unit),
+               		lenY = camera.zoom * Math.abs(unit);
+
+ 			  console.log(unit, camera.zoom, lenX, lenY);
+ 			  
+               uniforms.pitch.value = new THREE.Vector2(lenX, lenY);
+               uniforms.scale.value = 10;
+               uniforms.u_time.value += delta;
+               uniforms.u_frame.value += 1.0;
+	       }
+			  
+			app.render((delta)=>{
+			  // render
+			
+			  updateUniforms(delta);
+			  
+		      renderer.render(scene, camera);
+		
+			}, ()=>{
+				// resize 
+				app.updateSize(app.fullWidth, app.fullHeight);
+			});			
+			
+		});
+    </script>        
+</body>
+</html>

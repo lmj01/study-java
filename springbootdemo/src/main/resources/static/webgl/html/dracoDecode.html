@@ -32,8 +32,8 @@
 		let alpha = 45;
 		
 		let app, drcFile =
-			//'file';
-			'bunny';
+			'file';
+			//'bunny';
 		// Configure and create Draco decoder.
 		THREE.DRACOLoader.setDecoderPath( '../vendors/threejs/draco/' );
 		THREE.DRACOLoader.setDecoderConfig( { type: 'js' } );
@@ -78,7 +78,7 @@
 			let axesHelper = new THREE.AxesHelper(100);
 			//app.add(axesHelper);
 
-			let center = new THREE.Vector3(), mesh = null;
+			let mesh = null;
 	
 			let url = `../../models/${drcFile}.drc`;
 			new THREE.DRACOLoader().load( url, function ( geometry ) {	
@@ -99,26 +99,17 @@
 				// mj.fitCamera(app, mesh);
 				
 				// second
-				let box = app.getBox(), 
-					size = new THREE.Vector3();
-				box.getCenter(center);
-				box.getSize(size);
-				
-				let maxLen = //size.z , 
-					Math.max(size.x, Math.max(size.y, size.z)),
+				const {center, size} = app.getBox();
+					
+				let maxLen = Math.max(size.x, Math.max(size.y, size.z)),
 					distance = maxLen / (2 * mj.tanHalf(alpha));
 				
-				console.log('data info---', size, center, box, distance);
-				
-				//camera.position.z = center.z - distance;
-				
-				//camera.up.copy(center);
+				console.log('data info---', size, center, distance);
+								
 				camera.position.set(center.x, center.y, center.z - distance);
 				//camera.position.z *= 2;
 				camera.position.z *= Math.sqrt(3);
-				
-				//let eye = center.sub(camera.position.multiplyScalar(distance));
-				//camera.position.copy(eye);
+				camera.lookAt(center.x,  center.y, center.z);
 				
 				// Release decoder resources.
 				THREE.DRACOLoader.releaseDecoderModule();	
@@ -140,8 +131,6 @@
 					mesh.rotation.x += 0.001;
 					//mesh.rotation.y += 0.001;
 				}
-				
-				camera.lookAt( center.x, center.y, center.z );
 				
 				app.renderDefault();
 				

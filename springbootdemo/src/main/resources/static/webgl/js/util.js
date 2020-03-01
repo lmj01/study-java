@@ -43,6 +43,8 @@ mj.fitCamera = function(app, mesh) {
 	mesh.scale.setScalar(scale1);	
 }
 mj.tanHalf = (deg) => { return Math.tan(THREE.Math.DEG2RAD * deg / 2) }
+// here better is sqrt(2) to sqrt(3)
+mj.disFactor = Math.sqrt(3); 
 /*
  * blob to file
  */
@@ -65,4 +67,52 @@ mj.mesh2file = function(mesh, opt) {
 	}
 	stlExport(mesh);
 }
+/*
+ * get the rotate matrix
+ * by three axes, at least two axes given
+ */
+mj.uvn = (function() {
+	let unit1 = new THREE.Vector3(), unit2 = new THREE.Vector3(), tmp = new THREE.Vector3();
+	let rot1 = new THREE.Vector3(), rot2 = new THREE.Vector3();
+	let mat1 = new THREE.Matrix4(), mat2 = new THREE.Matrix4();
+	return function(axesX, axesY, axesZ, mat) {
+		mat = mat ? mat.identity() : new THREE.Matrix4();
+		let axes1, axes2;
+		if (!axesX) {
+			unit1.set(0,1,0);
+			unit2.set(0,0,1);
+			axes1 = axesY;
+			axes2 = axesZ;
+		} else if (!axesY) {
+			unit1.set(1,0,0);
+			unit2.set(0,0,1);
+			axes1 = axesX;
+			axes2 = axesZ;
+		} else if (!axesZ) {
+			unit1.set(1,0,0);
+			unit2.set(0,1,0);
+			axes1 = axesX;
+			axes2 = axesY;
+		} else {
+			unit1.set(0,1,0);
+			unit2.set(0,0,1);
+			axes1 = axesY;
+			axes2 = axesZ;
+		}
+		rot1.crossVectors(unit1, axes1).normalize();
+		if (rot1.equals(0)) {
+			rot1.addScalar(0.0001).crossVectors(unit1, axes1).normalize();
+		}
+		let angle1 = unit1.angleTo(axes1);
+		tmp.copy(unit2).applyAxisAngle(rot1, angle1);
+		rot2.crossVectors(tmp, axes2).normalize();
+		if (rot2.equals(0)) {
+			rot2.addScalar(0.0001).crossVectors(tmp, axes2).normalize();
+		}
+		let angle2 = tmp.angleTo(axes2);
+		mat.multiplyMatrices(mat1.makeRotationAxis(rot1, angle1), mat);
+		mat.multiplyMatrices(mat2.makeRotationAxis(rot2, angle2), mat);
+		return mat;
+	}
+})();
 

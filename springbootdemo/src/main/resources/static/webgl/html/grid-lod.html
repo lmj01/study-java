@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/TrackballControls.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/STLLoader.js"></script>
+	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>	
+	<style>
+		html, body {
+		  margin: 0;
+		  height: 100%;
+		}
+		canvas {
+		  width: 100%;
+		  height: 100%;
+		  display: block;
+		  position: absolute;
+		}    
+	</style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <script type="text/javascript" src="../js/app.js"></script>
+    <script type="text/javascript" src="../js/gui.js"></script>
+    <script type="text/javascript" src="../js/gridLod.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+    <script>
+        let app;
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#c' )))
+		.then(newApp=>{
+			app = newApp;				
+			
+// 			let grid1 = new GridMesh(1, 1000, 2500),
+// 				grid2 = new GridMesh(10, 1000, 2500),
+// 				grid3 = new GridMesh(100, 1000, 2500);
+// 			app.add(grid1);
+// 			app.add(grid2);
+// 			app.add(grid3);
+			
+			let size = 100;
+			let camera = 
+				new THREE.OrthographicCamera(-size, size, size, -size, -size, size);
+			app.setCamera(camera);
+			
+			const controls = new THREE.TrackballControls(camera, app.renderer.domElement);
+			controls.rotateSpeed = 2.0;
+			controls.zoomSpeed = 2.0;
+			controls.panSpeed = 2.0;
+			controls.noZoom = false;
+			controls.noPan = false;
+			controls.staticMoving = true;
+			controls.dynamicDampingFactor = 0.3;
+			controls.update();
+						
+			app.scene.background = new THREE.Color( 0x443333 );
+			//app.scene.fog = new THREE.Fog( 0x443333, 200, 1000 );
+			//app.scene.background.set(0xff0ff000);
+			
+			const renderer = app.renderer;
+			const scene = app.scene;
+			const canvas = renderer.domElement;
+			
+			renderer.setClearColor(new THREE.Color(0xf0f0f0f0));
+			
+			if (true) {
+	            new THREE.STLLoader().load('../../models/gum.stl', function(geometry) {
+	                let gum = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xffff00}));
+	                gum.name = 'gum';
+	                gum.geometry.computeBoundingBox();
+	                scene.add(gum);
+	            });
+	        }
+					    
+		    let axesHelper =  new THREE.AxesHelper(50);
+			app.add(axesHelper);
+			
+			function copyRotate(grid) {
+				let mSrc = camera.matrixWorldInverse,
+					mDst = grid.matrixWorld;
+				// X axes
+				mDst[0] = mSrc[0]; 
+				mDst[1] = mSrc[1];
+				mDst[2] = mSrc[2];
+				// Y axes
+				mDst[4] = mSrc[4];
+				mDst[5] = mSrc[5];
+				mDst[6] = mSrc[6];
+				// Z axes
+				mDst[8] = mSrc[8];
+				mDst[9] = mSrc[9];
+				mDst[10] = mSrc[10];
+				grid.matrixWorldNeedsUpdate = true;
+			}
+			
+			app.render((delta)=>{
+			  // render
+			
+			  //copyRotate(grid1);
+			  
+			  controls.update();
+			  
+		      renderer.render(scene, camera);
+		
+			}, ()=>{
+				// resize 
+				app.updateSize(app.fullWidth, app.fullHeight);
+			});			
+			
+		});
+    </script>        
+</body>
+</html>

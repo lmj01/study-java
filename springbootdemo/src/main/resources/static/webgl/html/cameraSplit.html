@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Viewport | Demo</title>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
+	<style type="text/css">
+		html, body {
+		  margin: 0;
+		  height: 100%;
+		}
+		#c {
+		  width: 100%;
+		  height: 100%;
+		  display: block;
+		}
+		.split {
+		  position: absolute;
+		  left: 0;
+		  top: 0;
+		  width: 100%;
+		  height: 100%;
+		  display: flex;
+		  flex-flow: row wrap;
+		}
+		.split>div {
+		  width: 50%;
+		  height: 50%;
+		}
+	</style>	
+</head>
+<body>
+	<canvas id="c"></canvas>
+    <div class="split">
+       <div id="view1" tabindex="1"></div>
+       <div id="view2" tabindex="2"></div>
+       <div id="view3" tabindex="3"></div>
+       <div id="view4" tabindex="4"></div>
+    </div>
+	<script type="text/javascript" src="../js/app.js"></script>
+	<script type="text/javascript" src="../js/gui.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+	<script>		
+		let app, camera2, cameraPerspective;
+		Promise.resolve(new App(window.innerWidth, window.innerHeight, document.querySelector( '#c' )))
+		.then(newApp=>{
+			app = newApp;
+	
+			const view1Elem = document.querySelector('#view1'),
+				view2Elem = document.querySelector('#view2'),
+				view3Elem = document.querySelector('#view3'),
+				view4Elem = document.querySelector('#view4');
+			
+			const fov = 75,
+				aspect = window.innerWidth / window.innerHeight,
+				near = 0.1,
+				far = 10000;
+			
+			cameraPerspective = new THREE.PerspectiveCamera(fov, aspect, near, far);
+			app.setCamera(cameraPerspective);
+			
+			const controls = new THREE.OrbitControls(cameraPerspective, view1Elem);
+			//controls.target.set(0, 5, 0);
+			controls.update();
+			
+			let size = 100, czoom = 0.2;			
+			camera2 = new THREE.OrthographicCamera(-size, size, size, -size, near, far/10);
+			camera2.zoom = czoom;
+			
+			const gui = new dat.GUI();
+			  gui.add(camera2, 'zoom', 0.01, 5, 0.01).listen();
+			  const minMaxGUIHelper = new MinMaxGUIHelper(camera2, 'near', 'far', 0.1);
+			  gui.add(minMaxGUIHelper, 'min', 0.1, 50, 0.1).name('near');
+			  gui.add(minMaxGUIHelper, 'max', 0.1, 100, 0.1).name('far');
+			  let option = {
+					  side:"top"
+			  }
+			  gui.add(option, "side", ["front", "back", "right", "left", "top", "bottom"]).onFinishChange((val)=>{
+				  app.updateCameraType(cameraPerspective, val);
+			  });
+						
+			let camera3 =  camera2.clone(), camera4 = camera2.clone();
+			
+			const controls2 = new THREE.OrbitControls(camera2, view2Elem);
+			//controls2.target.set(0,5,0);
+			controls2.update();
+			
+			const controls3 = new THREE.OrbitControls(camera3, view3Elem);
+			controls3.target.set(0,5,0);
+			controls3.update();
+			
+			const controls4 = new THREE.OrbitControls(camera4, view4Elem);
+			controls4.target.set(0,5,0);
+			controls4.update();
+			
+			let cameraHelper4 = new THREE.CameraHelper(camera4);
+			cameraHelper4.visible = true;
+			//app.add(cameraHelper4);
+			
+			
+			app.scene.background = new THREE.Color( 0x443333 );
+			//app.scene.fog = new THREE.Fog( 0x443333, 200, 1000 );
+			
+			const renderer = app.renderer;
+			const scene = app.scene;
+			const canvas = renderer.domElement;
+			let boxCenter = null;
+		    
+			{
+				const planeSize = 40;
+				
+				const loader = new THREE.TextureLoader();
+			    const texture = loader.load('checker.png');
+			    texture.wrapS = THREE.RepeatWrapping;
+			    texture.wrapT = THREE.RepeatWrapping;
+			    texture.magFilter = THREE.NearestFilter;
+			    const repeats = planeSize / 2;
+			    texture.repeat.set(repeats, repeats);
+
+			    const planeGeo = new THREE.PlaneBufferGeometry(planeSize, planeSize);
+			    const planeMat = new THREE.MeshPhongMaterial({
+			      map: texture,
+			      side: THREE.DoubleSide,
+			    });
+			    const mesh = new THREE.Mesh(planeGeo, planeMat);
+			    mesh.rotation.x = Math.PI * -.5;
+			    app.add(mesh);
+			}
+
+			app.addDefault();
+	
+			  {
+				  
+				  let axesHelper =  new THREE.AxesHelper(50);
+				  app.add(axesHelper);
+				  
+				  app.updateCameraType(cameraPerspective, "top");
+				  	
+			  }
+			  			  
+			  function setScissorForElement(elem) {
+				const canvasRect = canvas.getBoundingClientRect();
+			    const elemRect = elem.getBoundingClientRect();
+
+			    // compute a canvas relative rectangle
+			    const right = Math.min(elemRect.right, canvasRect.right) - canvasRect.left;
+			    const left = Math.max(0, elemRect.left - canvasRect.left);
+			    const bottom = Math.min(elemRect.bottom, canvasRect.bottom) - canvasRect.top;
+			    const top = Math.max(0, elemRect.top - canvasRect.top);
+
+			    const width = Math.min(canvasRect.width, right - left);
+			    const height = Math.min(canvasRect.height, bottom - top);
+
+			    // setup the scissor to only render to that part of the canvas
+			    const positiveYUpBottom = canvasRect.height - bottom;
+			    //console.log('---', elem.id, left, positiveYUpBottom, width, height);
+			    renderer.setScissor(left, positiveYUpBottom, width, height);
+			    renderer.setViewport(left, positiveYUpBottom, width, height);
+
+			    // return the aspect
+			    return width / height;
+			  }
+			  
+			  
+			  
+			  function updateOrthographicCamera(elem, camera, type) {
+				  const elemRect = elem.getBoundingClientRect();
+				  const {center, size} = app.getBox();
+				
+				  app.updateCameraType(camera, type);
+				
+				  camera.zoom = Math.min(elemRect.width / size.x, 
+						  elemRect.height / size.y) * 0.2;
+				  camera.updateProjectionMatrix();
+				  camera.updateMatrix();
+			  }
+
+			  
+			app.render(()=>{
+				// render
+				
+				// turn on the scissor
+			    renderer.setScissorTest(true);
+			
+			    // render the original view
+			    {
+			      const aspect = setScissorForElement(view1Elem);
+			
+			      // adjust the camera for this aspect
+			      cameraPerspective.aspect = aspect;
+			      cameraPerspective.updateProjectionMatrix();
+			 
+			      scene.background.set(0xff0ff000);
+			      
+			      // render
+			      renderer.render(scene, cameraPerspective);
+			    }
+			
+			    // render from the 2nd camera
+			    {
+			      const aspect = setScissorForElement(view2Elem);
+			
+			      updateOrthographicCamera(view2Elem, camera2, "top");
+			
+			      scene.background.set(0x000040);
+			      
+			      controls2.update();
+			
+			      renderer.render(scene, camera2);
+			    }
+			
+				// render from the 3nd camera
+			    {
+			      const aspect = setScissorForElement(view3Elem);
+
+			      updateOrthographicCamera(view3Elem, camera3, "front");
+
+			      scene.background.set(0x000040);
+			      
+			      controls3.update();
+			
+			      renderer.render(scene, camera3);
+			    }
+			
+			 	// render from the forth camera
+			    {
+			      const aspect = setScissorForElement(view4Elem);
+			
+			      updateOrthographicCamera(view4Elem, camera4, "right");
+			      
+			      scene.background.set(0x000040);
+			
+			      controls4.update();
+			      
+			      renderer.render(scene, camera4);
+			    }
+			
+			}, ()=>{
+				// resize 
+				
+			});			
+			
+		});
+	</script>
+</body>
+</html>
