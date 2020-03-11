@@ -5,8 +5,7 @@
 	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
 	<script type="text/javascript" src="../vendors/threejs/TrackballControls.js"></script>
 	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
-	<script type="text/javascript" src="../vendors/threejs/PLYLoader.js"></script>
-	<script type="text/javascript" src="../vendors/threejs/GLTFLoader.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OBJLoader.js"></script>
 	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
 	<script type="text/javascript" src="../vendors/signals.min.js"></script>	
 	<style>
@@ -47,38 +46,37 @@
 			
 			scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
 			
-			let spotLight = new THREE.SpotLight(0xffffbb, 2);
-			spotLight.position.set(0.5, 0, 1);
-			spotLight.position.multiplyScalar(700);
+// 			let spotLight = new THREE.SpotLight(0xffffbb, 2);
+// 			spotLight.position.set(0.5, 0, 1);
+// 			spotLight.position.multiplyScalar(700);
 			
-			scene.add(spotLight);
+// 			scene.add(spotLight);
 			
-			spotLight.castShadow = true;
+// 			spotLight.castShadow = true;
 			
-			spotLight.shadow.mapSize.width = 2048;
-			spotLight.shadow.mapSize.height = 2048;
-			spotLight.shadow.camera.near = 200;
-			spotLight.shadow.camera.far = 1500;
-			spotLight.shadow.camera.fov = 40;
-			spotLight.shadow.bias = -0.005;
+// 			spotLight.shadow.mapSize.width = 2048;
+// 			spotLight.shadow.mapSize.height = 2048;
+// 			spotLight.shadow.camera.near = 200;
+// 			spotLight.shadow.camera.far = 1500;
+// 			spotLight.shadow.camera.fov = 40;
+// 			spotLight.shadow.bias = -0.005;
 			
 			
 			let imgInfo = [
-				['gumWithUv.png','gumWithUvNormal.png', 'gumWithUv.ply'],
-				['gumuv.png', 'gumuvNormal.png', 'gum.ply'],
-				['halfuv.png', 'halfuvNormal.png', 'half.ply'],
-				['gum.png', 'gumNormal.png', 'patch.ply']
+				['patchWithUV.obj', 'gum.png'],
+				['part4-lower.obj', 'uvhalf.png'],
+				['patchWithUV2.obj', 'uv.png'],
+				['patchWithUV3.obj', 'uv.png'],
 			];
 			let mInfo = imgInfo[3];
-			let mapHeight = new THREE.TextureLoader().load('../models/LeePerrySmith/Infinite-Level_02_Disp_NoSmoothUV-4096.jpg');
-			let mapTex = new THREE.TextureLoader().load('../models/gum/' + mInfo[0]),
-				mapNormal = new THREE.TextureLoader().load('../models/gum/' + mInfo[1]);
+			let mapTex = new THREE.TextureLoader().load('../models/gum2/' + mInfo[1]);
+				//mapNormal = new THREE.TextureLoader().load('../models/gum/' + mInfo[1]);
 			let phongMaterial = new THREE.MeshPhongMaterial({ 
 				color: 0x552811,
 				specular: 0x222222,
 				shininess: 25,
-				bumpMap: mapHeight,
-				bumpScale: 12 
+				//bumpMap: mapHeight,
+				//bumpScale: 12 
 			});
 			
 			function updateOrthoCamera(_camera, _control) {
@@ -125,43 +123,25 @@
 				diffuseColor = new THREE.Color(),
 				specularColor = new THREE.Color();
 			
-			scene.add(ambientLight);
-			scene.add(light);
+// 			scene.add(ambientLight);
+// 			scene.add(light);
 			
 			scene.background = new THREE.Color( 0x443333 ); // 	0xffffff
 			let scale = 1, mesh = null;
 			if (true) {
-				new THREE.PLYLoader().load('../models/gum/' + mInfo[2], function(geo) {
+				new THREE.OBJLoader().load('../models/gum2/' + mInfo[0], function(geo) {
 					console.log('ply',geo);
-					let gum = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
+					
+					let gum = new THREE.Mesh(geo.children[0].geometry, new THREE.MeshPhongMaterial({
 						map:mapTex,
 						specular: 0x222222,
 						shininess: 25,		
 						//bumpMap: mapNormal,
 						//bumpScale: 12 
 						}));
-					gum.name = 'tset';
 					scene.add(gum);
 				});
 			}
-			if (true) {
-	            new THREE.GLTFLoader().load('../models/LeePerrySmith/LeePerrySmith.glb', function(gltf) {
-	            	
-// 	            	let scale = 1, 
-	            	mesh = new THREE.Mesh(gltf.scene.children[0].geometry, phongMaterial);
-// 	                mesh.position.y = -50;	                
-// 	                mesh.scale.set(scale, scale, scale);
-	            
-					mesh.castShadow = true;
-	                mesh.receiveShadow = true;
-	            	
-	                scene.add(mesh);
-	                
-	                app.updateCameraType(camera, "back", fov);	                
-	                updateOrthoCamera(camera, app.control);
-	                app.renderFrame();
-	            });
-	        }
 			
 		    let axesHelper =  new THREE.AxesHelper(10);		    
 			app.add(axesHelper);
