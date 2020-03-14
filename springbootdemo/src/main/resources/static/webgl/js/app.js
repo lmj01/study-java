@@ -83,9 +83,10 @@ class App {
 		this.cbRender = cbRender;
 		this.cbResize = cbResize;
 		renderer.setPixelRatio(window.devicePixelRatio);
+
+		renderer.shadowMap.enabled = true;
 		renderer.gammaInput = true;
-		renderer.gammaOutput = true;
-		renderer.shadowMap.enabled = true;		
+		renderer.gammaOutput = true;		
 	}
 	renderLoop() {
 		this.__init();
