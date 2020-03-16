@@ -6,6 +6,8 @@
 	<script type="text/javascript" src="../vendors/threejs/TrackballControls.js"></script>
 	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
 	<script type="text/javascript" src="../vendors/threejs/OBJLoader.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/PLYLoader.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/Lut.js"></script>
 	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
 	<script type="text/javascript" src="../vendors/signals.min.js"></script>	
 	<style>
@@ -35,49 +37,52 @@
 			const canvas = renderer.domElement;
 			renderer.shadowMap.enabled = true;
 			
+			let uiScene = new THREE.Scene(),
+				uiSize = 0.6,
+				uiCamera = new THREE.OrthographicCamera(-uiSize, uiSize, uiSize, -uiSize, -1, 2),
+				lut = new THREE.Lut(),
+				sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+						map: new THREE.CanvasTexture(lut.createCanvas())
+				}));
+			uiCamera.position.set(0, 0, 1);
+			lut.setMin(0);
+			lut.setMax(1);
+			sprite.scale.x = 0.02;
+			uiScene.add(sprite);
+			
 			let target = new THREE.Vector3();						
 			let size = 100, fov = 45.0, aspect = window.innerWidth/window.innerHeight,
 				near = 1.0, far = 10000.0;
 			let camera = 
 				new THREE.PerspectiveCamera(fov, aspect, near, far);
 // 				new THREE.OrthographicCamera(-fullWidth/2, fullWidth/2, fullHeight/2, -fullHeight/2	, near, far);
-			camera.position.z = 1200;
+			camera.position.z = 60;
 			app.setCamera(camera);
 			
 			scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
 			
-// 			let spotLight = new THREE.SpotLight(0xffffbb, 2);
-// 			spotLight.position.set(0.5, 0, 1);
-// 			spotLight.position.multiplyScalar(700);
+			let spotLight = new THREE.SpotLight(0xffffbb, 2);
+			spotLight.position.set(0.5, 0, 1);
+			spotLight.position.multiplyScalar(700);
 			
-// 			scene.add(spotLight);
+			scene.add(spotLight);
 			
-// 			spotLight.castShadow = true;
+			spotLight.castShadow = true;
 			
-// 			spotLight.shadow.mapSize.width = 2048;
-// 			spotLight.shadow.mapSize.height = 2048;
-// 			spotLight.shadow.camera.near = 200;
-// 			spotLight.shadow.camera.far = 1500;
-// 			spotLight.shadow.camera.fov = 40;
-// 			spotLight.shadow.bias = -0.005;
+			spotLight.shadow.mapSize.width = 2048;
+			spotLight.shadow.mapSize.height = 2048;
+			spotLight.shadow.camera.near = 200;
+			spotLight.shadow.camera.far = 1500;
+			spotLight.shadow.camera.fov = 40;
+			spotLight.shadow.bias = -0.005;
 			
 			
 			let imgInfo = [
-				['patchWithUV.obj', 'gum.png'],
-				['part4-lower.obj', 'uvhalf.png'],
-				['patchWithUV2.obj', 'uv.png'],
-				['patchWithUV3.obj', 'uv.png'],
+				['11.obj', '11_pc1.txt'],
+				['11.ply', '11_pc1.txt'],
 			];
-			let mInfo = imgInfo[3];
-			let mapTex = new THREE.TextureLoader().load('../models/gum2/' + mInfo[1]);
-				//mapNormal = new THREE.TextureLoader().load('../models/gum/' + mInfo[1]);
-			let phongMaterial = new THREE.MeshPhongMaterial({ 
-				color: 0x552811,
-				specular: 0x222222,
-				shininess: 25,
-				//bumpMap: mapHeight,
-				//bumpScale: 12 
-			});
+			let mInfo = imgInfo[1];
+			//let mapTex = new THREE.TextureLoader().load('../models/teeth/' + mInfo[1]);
 			
 			function updateOrthoCamera(_camera, _control) {
 				target = _control.target;
@@ -122,24 +127,52 @@
 				light = new THREE.DirectionalLight(0xffffff, 1.0), 
 				diffuseColor = new THREE.Color(),
 				specularColor = new THREE.Color();
+			let material = new THREE.MeshPhongMaterial({
+					//color: 0x333333,
+					vertexColors: THREE.VertexColors,
+					specular: 0x222222,
+					shininess: 25,	 
+				});
 			
-// 			scene.add(ambientLight);
-// 			scene.add(light);
+			scene.add(ambientLight);
+			scene.add(light);
 			
 			scene.background = new THREE.Color( 0x443333 ); // 	0xffffff
-			let scale = 1, mesh = null;
+			let scale = 1, mesh = null;			
 			if (true) {
-				new THREE.OBJLoader().load('../models/gum2/' + mInfo[0], function(geo) {
-					console.log('ply',geo);
-					
-					let gum = new THREE.Mesh(geo.children[0].geometry, new THREE.MeshPhongMaterial({
-						map:mapTex,
-						specular: 0x222222,
-						shininess: 25,		
-						//bumpMap: mapNormal,
-						//bumpScale: 12 
-						}));
-					scene.add(gum);
+				new THREE.PLYLoader().load('../models/teeth/' + mInfo[0], function(geo) {
+				//new THREE.OBJLoader().load('../models/teeth/' + mInfo[0], function(obj) {
+					//let geo = obj.children[0].geometry;
+					console.log(geo);
+					if (geo.attributes.color === undefined) {
+						geo.add()
+					}
+					fetch('../models/teeth/curvature/'+mInfo[1])
+						.then((res)=>{
+							return res.text();
+						})
+						.then((res)=>{
+							let data = [];
+							res.split('\n').map((v)=>{
+								if (v.length > 0) {
+									data.push(parseFloat(v));
+								}
+							});
+							let colors = geo.attributes.color.array;
+// 							colors.map((v, i, colors)=>{
+// 								colors[i] = Math.random();
+// 							});
+							for (let i=0; i<colors.length/3;i++) {
+								let color = lut.getColor(data[i]);
+								colors[i*3+0] = color.r;
+								colors[i*3+1] = color.g;
+								colors[i*3+2] = color.b;
+							}
+							geo.computeVertexNormals();
+							geo.attributes.color.needsUpdate = true;
+							let gum = new THREE.Mesh(geo, material);
+							scene.add(gum);
+						});
 				});
 			}
 			
@@ -167,8 +200,7 @@
 				
 				lx: 0.32,
 				ly: 0.39,
-				lz: 0.7,
-				
+				lz: 0.7,				
 			};
 			  gui.add(option, "side", ["front", "back", "right", "left", "top", "bottom"]).onFinishChange((val)=>{
 				  app.updateCameraType(camera, val, fov);
@@ -183,7 +215,6 @@
 			  f.add(option, "shininess", 1.0, 400.0, 1.0).name('shininess').onChange(updateFrame);
 			  f.add(option, "kd", 0.0, 1.0, 0.025).name('diffuse').onChange(updateFrame);
 			  f.add(option, "ks", 0.0, 1.0, 0.025).name('specular').onChange(updateFrame);
-			  f.add(option, "metallic").onChange(updateFrame);
 			  
 			  f = gui.addFolder('Material Color');
 			  f.add(option, "hue", 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
@@ -206,20 +237,22 @@
 			  });
 			 
 			app.renderCallback((delta)=>{
-								
-				phongMaterial.shininess = option.shininess;
 				
+				material.shininess = option.shininess;
+				
+				diffuseColor.setHSL(option.hue, option.saturation, option.lightness);
 				diffuseColor.multiplyScalar(option.kd);
-// 				phongMaterial.color.copy(diffuseColor);
+				material.color.copy(diffuseColor);
 				
 				specularColor.multiplyScalar(option.ks);
-// 				phongMaterial.specular.copy(specularColor);
-				
-// 				ambientLight.color.setHSL(option.hue, option.saturation, option.lightness * option.ka);
-// 				light.position.set(option.lx, option.ly, option.lz);
-// 				light.color.setHSL(option.lhue, option.lsaturation, option.llightness);
+				material.specular.copy(diffuseColor);
+
+				ambientLight.color.setHSL(option.hue, option.saturation, option.lightness * option.ka);
+				light.position.set(option.lx, option.ly, option.lz);
+				light.color.setHSL(option.lhue, option.lsaturation, option.llightness);
 								
 				renderer.render(scene, camera);
+// 				renderer.render(uiScene, uiCamera);
 			  
 			}, ()=>{
 				app.updateSize(app.fullWidth, app.fullHeight);

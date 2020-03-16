@@ -4,8 +4,8 @@
 	<meta charset="UTF-8">
 	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
 	<script type="text/javascript" src="../vendors/threejs/TrackballControls.js"></script>
-	<script type="text/javascript" src="../vendors/threejs/STLLoader.js"></script>
-	<script type="text/javascript" src="../vendors/threejs/TeapotBufferGeometry.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/PLYLoader.js"></script>
 	<script type="text/javascript" src="../vendors/dat.gui.min.js"></script>
 	<script type="text/javascript" src="../vendors/signals.min.js"></script>	
 	<style>
@@ -33,28 +33,70 @@
 			app = newApp;				
 			const { renderer, scene, fullWidth, fullHeight } = app;
 			const canvas = renderer.domElement;
+			renderer.shadowMap.enabled = true;
 			
 			let target = new THREE.Vector3();						
 			let size = 100, fov = 45.0, aspect = window.innerWidth/window.innerHeight,
-				near = 1.0, far = 1000.0;
+				near = 0.1, far = 10000.0;
 			let camera = 
 // 				new THREE.PerspectiveCamera(fov, aspect, near, far);
 				new THREE.OrthographicCamera(-fullWidth/2, fullWidth/2, fullHeight/2, -fullHeight/2	, near, far);
+			camera.position.z = 90;
 			app.setCamera(camera);
 			
-			let textureMap = new THREE.TextureLoader().load('../images/UV_Grid_Sm.jpg');
-			textureMap.wrapS = textureMap.wrapT = THREE.RepeatWrapping;
-			textureMap.anisotropy = 16; // 
+			scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
 			
-			let materialColor = new THREE.Color();
-			materialColor.setRGB(1.0, 1.0, 1.0);
+// 			let spotLight = new THREE.SpotLight(0xffffbb, 2);
+// 			spotLight.position.set(20, 0, 200);
+// 			spotLight.position.multiplyScalar(100);
 			
-			let phongMaterial = new THREE.MeshPhongMaterial({ color: materialColor, side: THREE.DoubleSide }),
-			    texturedMaterial = new THREE.MeshPhongMaterial({ color: materialColor, map: textureMap, side: THREE.DoubleSide });
+// 			scene.add(spotLight);
+			
+// 			spotLight.castShadow = true;
+			
+// 			spotLight.shadow.mapSize.width = 2048;
+// 			spotLight.shadow.mapSize.height = 2048;
+// 			spotLight.shadow.camera.near = 200;
+// 			spotLight.shadow.camera.far = 1500;
+// 			spotLight.shadow.camera.fov = fov;
+// 			spotLight.shadow.bias = -0.005;
+			
+			
+			let imgInfo = [
+				['gumWithUv.png','gumWithUvNormal.png', 'gumWithUv.ply'],
+				['halfuv.png', 'halfuvNormal.png', 'half.ply'],
+				['uv.png', 'uvNormal.png', 'lower.ply'],
+				['uv1.png', 'uvNormal1.png', 'gum4part.ply'], // 3
+				['uv2.png', 'uvNormal1.png', 'gum4part.ply'], // 4
+			];
+			let mInfo = imgInfo[4];
+			let mapHeight = new THREE.TextureLoader().load('../models/LeePerrySmith/Infinite-Level_02_Disp_NoSmoothUV-4096.jpg');
+			let mapSpecular = new THREE.TextureLoader().load('../models/gum/uvSpecular.png');
+			let mapTex = new THREE.TextureLoader().load('../models/gum/' + mInfo[0]),
+				mapNormal = new THREE.TextureLoader().load('../models/gum/' + mInfo[1]);
+			let headMaterial = new THREE.MeshPhongMaterial({ 
+				color: 0x552811,
+				specular: 0x222222,
+				shininess: 25,
+				bumpMap: mapHeight,
+				bumpScale: 12 
+			});
+			let gumMaterial = new THREE.MeshPhongMaterial({
+				map:mapTex,
+				specular: 0x222222,
+				specularMap: mapSpecular,
+				shininess: 25,		
+				bumpMap: mapNormal,
+				bumpScale: 1,
+			});
 			
 			function updateOrthoCamera(_camera, _control) {
-				target = _control.target;
-				let distance = _camera.position.distanceTo(_control.target);
+				if (_control) {
+					target = _control.target;	
+				} else {
+					target = new THREE.Vector3();
+				}				
+				let distance = _camera.position.distanceTo(target);
 				let aspect = fullWidth / fullHeight;
 				camera.left = distance * aspect / -2;
 				camera.right = distance * aspect / 2;
@@ -62,73 +104,102 @@
 				camera.bottom = distance / -2;
 				camera.updateProjectionMatrix();
 			}
+			
+			let orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+			orbitControls.maxDistance = 1000;
+			orbitControls.update();
+			app.setControl(orbitControls);
 						
-			let trackballControls = new THREE.TrackballControls(camera, renderer.domElement);
-			trackballControls.rotateSpeed = 2.0;
-			trackballControls.zoomSpeed = 2;
-			trackballControls.panSpeed = 2;
-			trackballControls.noZoom = false;
-			trackballControls.noPan = false;
-			trackballControls.staticMoving = true;
-			trackballControls.dynamicDampingFactor = 0.3;
-			trackballControls.keys = [ 65, 83, 68 ];
-			trackballControls.addEventListener( 'change', function () {
-				app.renderFrame();
-			} );
-			trackballControls.target.copy(target);
-			if (!camera.isPerspectiveCamera) {
-				trackballControls.maxDistance = 750;
-				trackballControls.minDistance = 45;
-				trackballControls.addEventListener( 'end', function () {
-					updateOrthoCamera(camera,trackballControls);
-					app.renderFrame();
-				});
-			}
-			app.setControl(trackballControls);
-				
+// 			let trackballControls = new THREE.TrackballControls(camera, renderer.domElement);
+// 			trackballControls.rotateSpeed = 2.0;
+// 			trackballControls.zoomSpeed = 2;
+// 			trackballControls.panSpeed = 2;
+// 			trackballControls.noZoom = false;
+// 			trackballControls.noPan = false;
+// 			trackballControls.staticMoving = true;
+// 			trackballControls.dynamicDampingFactor = 0.3;
+// 			trackballControls.keys = [ 65, 83, 68 ];
+// 			trackballControls.addEventListener( 'change', function () {
+// // 				app.renderFrame();
+// 			} );
+// 			trackballControls.target.copy(target);
+// 			if (!camera.isPerspectiveCamera) {
+// 				trackballControls.maxDistance = 7500;
+// 				trackballControls.minDistance = 0.1;
+// 				trackballControls.addEventListener( 'end', function () {
+// 					//updateOrthoCamera(camera,trackballControls);
+// // 					app.renderFrame();
+// 				});
+// 			}
+// 			app.setControl(trackballControls);			
 						
-			app.scene.background = new THREE.Color( 0x443333 ); // 	0xffffff
-			
-			if (true) {
-	            new THREE.STLLoader().load('../../models/gum.stl', function(geometry) {
-	            	// new THREE.MeshPhongMaterial({color:0xffff00})
-	                let gum = new THREE.Mesh(geometry, texturedMaterial);
-	                gum.name = 'gum';
-	                gum.geometry.computeBoundingBox();
-	                scene.add(gum);
-	                
-	                app.updateCameraType(camera, "front", fov);	                
-	                updateOrthoCamera(camera,trackballControls);
-	                app.renderFrame();
-	                createNewTeapot();
-	            });
-	        }
-			
-		    let axesHelper =  new THREE.AxesHelper(10);		    
-			app.add(axesHelper);
-			
-			let teapot, teapotData = {
-					tess:0,
-					bottom:true,
-					lid:true,
-					body:true,
-					fitLid:true,
-					nonblinn:false,
-					shading:'phong'
-			};
-			let ambientLight = new THREE.AmbientLight(0x333333), // 0.2
-				light = new THREE.DirectionalLight(0xffffff, 1.0), 
+			let ambientLight = new THREE.AmbientLight(0xe8d3d3, 0.3), // 0.2
+				directionLight = new THREE.DirectionalLight(0xffffff, 1.0),
+				directionLight2 = new THREE.DirectionalLight(0xffffff, 1.0),
+				directionLight3 = new THREE.DirectionalLight(0xffffff, 1.0),
+				directionLight4 = new THREE.DirectionalLight(0xffffff, 1.0),
+				pointLight1 = new THREE.PointLight(0xffffff, 1, 100),
+				pointLight2 = new THREE.PointLight(0xffffff, 1, 100),
+				pointLight3 = new THREE.PointLight(0xffffff, 1, 100),
+				pointLight4 = new THREE.PointLight(0xffffff, 1, 100),
+				fog = new THREE.Fog(0x3f7b9d, 0, 60),
 				diffuseColor = new THREE.Color(),
 				specularColor = new THREE.Color();
 			
-			app.add(ambientLight);
-			app.add(light);
+			let dlTargetObject = new THREE.Object3D();
+			scene.add(dlTargetObject);
+			directionLight.target = dlTargetObject;
+			scene.add(ambientLight);
+			let lightDistance = 100;
+			scene.add(directionLight); directionLight.position.set(0, 0, lightDistance * 100);
+			scene.add(directionLight2); directionLight2.position.set(0, 0, -lightDistance * 100);
+// 			scene.add(directionLight3); directionLight3.position.set(lightDistance, 0, 0);
+// 			scene.add(directionLight4); directionLight4.position.set(-lightDistance, 0, 0);
+// 			scene.add(pointLight1); pointLight1.position.set(0, 0, -lightDistance);
+// 			scene.add(pointLight2); pointLight2.position.set(0, 0, lightDistance);
+// 			scene.add(pointLight3); pointLight2.position.set(0, 100,0);
+// 			scene.add(pointLight4); pointLight2.position.set(0, 0, 100);
+			
+			//scene.background = new THREE.Color( 0x443333 ); // 	0xffffff
+			let scale = 1, mesh = null;
+			if (true) {
+				new THREE.PLYLoader().load('../models/gum/' + mInfo[2], function(geo) {
+					let gum = new THREE.Mesh(geo, gumMaterial);
+					gum.name = 'tset';
+					gum.rotation.x -= Math.PI/2;
+					//gum.position.y += 30;
+					gum.castShadow = true;
+					gum.receiveShadow = true;
+					updateOrthoCamera(camera, app.control);
+					scene.add(gum);
+				});
+			}
+			
+		    let axesHelper =  new THREE.AxesHelper(10);		    
+			app.add(axesHelper);
 			
 			const gui = new dat.GUI();	
 			let option = {
 				side: "front",
 				
-				shininess: 40.0,
+				// scene
+				background: '#e0cdcd',
+				ambient: ambientLight.color.getHex(),
+				hasFog: false,
+				fog: fog.color.getHex(),
+				
+				// mesh material
+				transparent: false,
+				opacity: 1,
+				depthTest: true,
+				depthWrite: true,
+				dithering: false,				
+				
+				// phong material
+				specular: '#444444',				
+				shininess: 160.0,
+				reflectivity: 0.8,
+				
 				ka: 0.17,
 				kd: 0.51,
 				ks: 0.2,
@@ -143,19 +214,16 @@
 				lsaturation: 0.01, // non-zero so that fractions will be shown
 				llightness: 1.0,
 				
+				// pt
+				pt2: pointLight2.color.getHex(),
+				pt3: pointLight3.color.getHex(),
+				pt4: pointLight4.color.getHex(),
+				
+				//
 				lx: 0.32,
 				ly: 0.39,
 				lz: 0.7,
 				
-				size: 50,
-				tess: 15,
-				bottom: true,
-				lid: true,
-				body: false,
-				fitLid: false,
-				nonblinn: false,
-				
-				shading: "phong"
 			};
 			  gui.add(option, "side", ["front", "back", "right", "left", "top", "bottom"]).onFinishChange((val)=>{
 				  app.updateCameraType(camera, val, fov);
@@ -163,114 +231,134 @@
 			  });
 			  
 			  let updateFrame = function updateFrame() {
-				  if (option.tess !== teapotData.tess ||
-							option.bottom !== teapotData.bottom || 
-							option.lid !== teapotData.lid ||
-							option.body !== teapotData.body ||
-							option.nonblinn !== teapotData.nonblinn ||
-							option.shading !== teapotData.shading) {
-							
-							teapotData.tess = option.tess;
-							teapotData.bottom = option.bottom;
-							teapotData.lid = option.lid;
-							teapotData.body = option.body;
-							teapotData.fitLid = option.fitLid;
-							teapotData.nonblinn = option.nonblinn;
-							teapotData.shading = option.shading;
-							
-							createNewTeapot();
-						}
-					app.renderFrame();  
+				  app.renderFrame();  
 			  };
 			  
-			  gui.add(option, 'shading', ['phong', 'textured']).name('Shading').onChange(updateFrame);
-			  let f = gui.addFolder('Material Control');
-			  f.add(option, "shininess", 1.0, 400.0, 1.0).name('shininess').onChange(updateFrame);
-			  f.add(option, "kd", 0.0, 1.0, 0.025).name('diffuse').onChange(updateFrame);
-			  f.add(option, "ks", 0.0, 1.0, 0.025).name('specular').onChange(updateFrame);
-			  f.add(option, "metallic").onChange(updateFrame);
+			  let  f = gui.addFolder('Scene');
+			  function handleColorChange(color) {
+				  return function(value) {
+					  if (typeof value === 'string') {
+						  value = value.replace('#', '0x');
+					  }
+					  color.setHex(value);
+				  }
+			  }
+			  let bkColor = new THREE.Color(), colorConvert = handleColorChange(bkColor);			  
+			  f.addColor(option, 'background').name('background').onChange((val)=>{
+				  colorConvert(val);
+				  renderer.setClearColor(bkColor.getHex());
+				  app.renderFrame();
+			  });
+			  scene.background = bkColor;
+			  let toAmbientColor = handleColorChange(ambientLight.color);
+			  f.addColor(option, 'ambient').name('ambient').onChange((val)=>{
+				  toAmbientColor(val);
+				  app.renderFrame();
+			  });
+			  f.add(option, 'hasFog').name('use fog').onChange((val)=>{
+				  if (val) scene.fog = fog;
+				  else scene.fog = null;
+				  headMaterial.needsUpdate = true;
+				  gumMaterial.needsUpdate = true;				  
+				  app.renderFrame();
+			  });
+			  let toFogColor = handleColorChange(fog.color);
+			  f.addColor(option, 'fog').name('fog').onChange((val)=>{
+				  toFogColor(val);
+				  app.renderFrame();
+			  })
+			  f = gui.addFolder('Mesh Material');
+			  f.add(option, 'transparent').onChange((val)=>{
+				  headMaterial.transparent = val;
+				  gumMaterial.transparent = val;
+				  app.renderFrame();
+			  });
+			  f.add(option, 'opacity', 0, 1).step(0.01).onChange((val)=>{
+				  headMaterial.opacity = val;
+				  gumMaterial.opacity = val;
+				  app.renderFrame();
+			  });
 			  
-			  f = gui.addFolder('Material Color');
-			  f.add(option, "hue", 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
-			  f.add(option, "saturation", 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
-			  f.add(option, "lightness", 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
+			  f = gui.addFolder('Phong Material');
+			  gumMaterial.shininess = option.shininess;
+			  f.add(option, "shininess", 1.0, 400.0, 1.0).name('shininess').onChange((val)=>{
+				  	headMaterial.shininess = val;
+					gumMaterial.shininess = val;
+					app.renderFrame();
+			  });
+			  let toSpecularColor = handleColorChange(specularColor);
+			  f.addColor(option, 'specular').name('specular').onChange((val)=>{
+				  toSpecularColor(val);
+				  headMaterial.specular.copy(specularColor);
+	 			  gumMaterial.specular.copy(specularColor);
+				  app.renderFrame();
+			  });
+			  f.add(option, "reflectivity", 0, 1.0).name('reflectivity').onChange((val)=>{
+				  	headMaterial.reflectivity = val;
+					gumMaterial.reflectivity = val;
+					app.renderFrame();
+			  });
+// 			  f = gui.addFolder('Material Control');
+			  			  			  
+// 			  f.add(option, "shininess", 1.0, 400.0, 1.0).name('shininess').onChange(updateFrame);
+// 			  f.add(option, "kd", 0.0, 1.0, 0.025).name('diffuse').onChange(updateFrame);
+// 			  f.add(option, "ks", 0.0, 1.0, 0.025).name('specular').onChange(updateFrame);
+// 			  f.add(option, "metallic").onChange(updateFrame);
+			  
+// 			  f = gui.addFolder('Material Color');
+// 			  f.add(option, "hue", 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
+// 			  f.add(option, "saturation", 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
+// 			  f.add(option, "lightness", 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
 			  
 			  f = gui.addFolder('Lighting');
 			  f.add(option, 'lhue', 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
 			  f.add(option, 'lsaturation', 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
 			  f.add(option, 'llightness', 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
-			  f.add(option, 'ka', 0.0, 1.0, 0.025).name('ambient').onChange(updateFrame);
-				
-			  f = gui.addFolder('Light Direction');
-			  f.add(option, 'lx', -1.0, 1.0, 0.025).name('x').onChange(updateFrame);
-			  f.add(option, 'ly', -1.0, 1.0, 0.025).name('y').onChange(updateFrame);
-			  f.add(option, 'lz', -1.0, 1.0, 0.025).name('z').onChange(updateFrame);
-			  
-			  f = gui.addFolder('Tessellation Control');
-			  f.add(option, 'tess', [2,3,5,6,8,10,15,20,30,40,50]).name('Tessellation Level').onChange(updateFrame);
-			  f.add(option, 'lid').name('display lid').onChange(updateFrame);
-			  f.add(option, 'body').name('display body').onChange(updateFrame);
-			  f.add(option, 'bottom').name('display bottom').onChange(updateFrame);
-			  f.add(option, 'fitLid').name('snug lid').onChange(updateFrame);
-			  f.add(option, 'nonblinn').name('origiinal scale').onChange(updateFrame);
-			  			 
-			  
-			  function createNewTeapot() {
-				  if (teapot !== undefined) {
-					  teapot.geometry.dispose();
-					  app.remove(teapot);
-				  }
-				  let teapotGeo = new THREE.TeapotBufferGeometry(option.size,
-						  option.tess, 
-						  option.bottom,
-						  option.lid,
-						  option.body,
-						  option.fitLid,
-						  !option.nonblinn);
-				  teapot = new THREE.Mesh(teapotGeo, teapotData.shading === 'phong' ? phongMaterial : texturedMaterial);
-				  app.add(teapot);
+			  f.add(option, 'ka', 0.0, 1.0, 0.025).name('ambient lighting').onChange(updateFrame);
+			
+			  let toPt2Color = handleColorChange(pointLight2.color),
+			  toPt3Color = handleColorChange(pointLight3.color),
+			  toPt4Color = handleColorChange(pointLight4.color);
+			  f.addColor(option, 'pt2').name('point light2').onChange((val)=>{
+				  toPt2Color(val);
 				  app.renderFrame();
-			  }
+			  })
+// 			  f.addColor(option, 'pt3').name('point light3').onChange((val)=>{
+// 				  toPt3Color(val);
+// 				  app.renderFrame();
+// 			  })
+// 			  f.addColor(option, 'pt4').name('point light4').onChange((val)=>{
+// 				  toPt3Color(val);
+// 				  app.renderFrame();
+// 			  })
+			  
+// 			  f = gui.addFolder('directionLight Positoin');
+// 			  f.add(option, 'lx', -35.0, 35.0, 0.02).name('x').onChange(updateFrame);
+// 			  f.add(option, 'ly', -30.0, 30.0, 0.02).name('y').onChange(updateFrame);
+// 			  f.add(option, 'lz', -15.0, 15.0, 0.02).name('z').onChange(updateFrame);
 			  
 			  app.animateHandle.add(()=>{
-				  
+// 				mesh.rotation.x += 0.01;  
+				
 			  });
 			 
 			app.renderCallback((delta)=>{
 				
-				console.log('---', delta, option.shading, teapotData.shading);
+				//ambientLight.color.setHSL(option.hue, option.saturation, option.lightness * option.ka);
+// 				directionLight.position.set(option.lx, option.ly, option.lz);
+// 				directionLight.color.setHSL(option.lhue, option.lsaturation, option.llightness);
 				
-				phongMaterial.shininess = texturedMaterial.shininess = option.shininess;
-				diffuseColor.setHSL(option.hue, option.saturation, option.lightness);
-				if (option.metallic) {
-					specularColor.copy(diffuseColor);
-				} else {
-					specularColor.setRGB(1, 1, 1);
-				}
-				
-				diffuseColor.multiplyScalar(option.kd);
-				phongMaterial.color.copy(diffuseColor);
-				texturedMaterial.color.copy(diffuseColor);
-				
-				specularColor.multiplyScalar(option.ks);
-				phongMaterial.specular.copy(specularColor);
-				texturedMaterial.specular.copy(specularColor);
-				
-				ambientLight.color.setHSL(option.hue, option.saturation, option.lightness * option.ka);
-				light.position.set(option.lx, option.ly, option.lz);
-				light.color.setHSL(option.lhue, option.lsaturation, option.llightness);
-				
-// 				scene.background = null;
-				
-// 				app.renderDefault();
-
-				app.renderer.render(app.scene, camera);
+// 				pointLight1.position.set(option.lx, option.ly, option.lz);
+				pointLight1.color.setHSL(option.lhue, option.lsaturation, option.llightness);
+								
+				renderer.render(scene, camera);
 			  
 			}, ()=>{
 				app.updateSize(app.fullWidth, app.fullHeight);
 			});			
 			
 			app.controlUpdate();
+			app.renderLoop();
 		});
     </script>        
 </body>
