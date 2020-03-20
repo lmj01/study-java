@@ -80,14 +80,13 @@
 			let teethMaterial = new THREE.MeshPhongMaterial({ 
 				map: mapDiffuse,
 				specular: 0x222222,
-				vertexColors: THREE.VertexColors,
+// 				vertexColors: THREE.VertexColors,
 				shininess: 400,
 				emissive: 0x4d4d4d
 			});
 			let gumMaterial = new THREE.MeshPhongMaterial({
 				color: 0xffffff,
 				map:mapTex,
-				vertexColors: THREE.VertexColors,
 				specular: 0x222222,
 				specularMap: mapSpecular,
 				shininess: 390,		
@@ -192,16 +191,6 @@
 			let scale = 1, mesh = null;
 			if (true) {
 				new THREE.PLYLoader().load('../models/gum/' + mInfo[2], function(geo) {
-					let colors = [], color = new THREE.Color('rgb(244,226,232)');
-					for (let i=0; i<geo.attributes.position.count;i++) {
-						colors.push(color.r);
-						colors.push(color.g);
-						colors.push(color.b);
-					}
-					geo.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-					geo.computeVertexNormals();
-					geo.normalizeNormals();
-					geo.attributes.color.needsUpdate = true;
 					let gum = new THREE.Mesh(geo, gumMaterial);
 					gum.name = 'gum';
 					gum.rotation.x -= Math.PI/2;
@@ -245,7 +234,7 @@
 							let c =(data[i]-minv) / vrange;
 							let y = geo.attributes.position.array[i*3+1],
 								cy = (tid<30? (maxy -y):(y - miny)) / yrange;
-							colors.push(color.r);colors.push(color.g);colors.push(color.b);
+// 							colors.push(color.r);colors.push(color.g);colors.push(color.b);
 							uvs.push(0.5);
 							if (c < 0.2) uvs.push(c);
 							else uvs.push(cy);
@@ -254,7 +243,7 @@
 // 						geo.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 						geo.computeVertexNormals();
 						geo.normalizeNormals();
-						geo.attributes.color.needsUpdate = true;
+// 						geo.attributes.color.needsUpdate = true;
 						let teeth = new THREE.Mesh(geo, teethMaterial);
 						teeth.name = 'teeth' + tid;
 						teeth.castShadow = true;
