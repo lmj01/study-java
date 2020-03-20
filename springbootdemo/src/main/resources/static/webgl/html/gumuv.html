@@ -35,6 +35,7 @@
 			const { renderer, scene, fullWidth, fullHeight } = app;
 			const canvas = renderer.domElement;
 			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 			
 			let target = new THREE.Vector3(), group = new THREE.Object3D();						
 			let size = 100, fov = 45.0, aspect = window.innerWidth/window.innerHeight,
@@ -80,9 +81,8 @@
 				map: mapDiffuse,
 				specular: 0x222222,
 				vertexColors: THREE.VertexColors,
-// 				vertexColors: THREE.NoColors,
 				shininess: 400,
-				emissive: 0x4d4d4d // 0x9f9f9f // 0x6d6a6a
+				emissive: 0x4d4d4d
 			});
 			let gumMaterial = new THREE.MeshPhongMaterial({
 				color: 0xffffff,
@@ -172,19 +172,22 @@
 	            document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
 	        }
 									
-			let ambientLight = new THREE.AmbientLight(0xffffff, 0.2), // 0.2
-				directionLight = new THREE.DirectionalLight(0xffffff, 0.3),
-// 				pointLight = new THREE.PointLight(0xffffff, 1.0),
-				fog = new THREE.Fog(0x3f7b9d, 0, 60),
-				diffuseColor = new THREE.Color(),
-				emissiveColor = new THREE.Color(),
-				specularColor = new THREE.Color();
-			
-// 			let dlTargetObject = new THREE.Object3D();
-// 			scene.add(dlTargetObject);
-// 			directionLight.target = dlTargetObject;
+	        let ambientLight = new THREE.AmbientLight(0xffffff, 0.2), // 0.2
+			light = new THREE.DirectionalLight(0xffffff, 0.3),
+			fog = new THREE.Fog(0x3f7b9d, 0, 60);			
+			if (light.isDirectionalLight) {
+				light.castShadow = true; // 灯光投掷阴影
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+	//				light.shadow.camera.near = 0.5;
+	//				light.shadow.camera.far = 5000;
+				
+				let dlTargetObject = new THREE.Object3D();
+	 			scene.add(dlTargetObject);
+	 			light.target = dlTargetObject;	
+			}
 			scene.add(ambientLight);
-			scene.add(directionLight);
+			scene.add(light);
 			
 			let scale = 1, mesh = null;
 			if (true) {
@@ -237,7 +240,7 @@
 							vrange = maxv-minv,
 							yrange = maxy - miny,
 							color = new THREE.Color('rgb(244,226,232)');
-						console.log(tid, maxy, miny, yrange);
+// 						console.log(tid, maxy, miny, yrange);
 						for (let i=0; i<count;i++) {
 							let c =(data[i]-minv) / vrange;
 							let y = geo.attributes.position.array[i*3+1],
@@ -280,6 +283,8 @@
 				ambient: ambientLight.color.getHex(),
 				hasFog: false,
 				fog: fog.color.getHex(),
+				// light intensity
+				aintensity: 0.05,
 				
 				// mesh material
 				transparent: false,
@@ -289,19 +294,30 @@
 				dithering: false,				
 				
 				// phong material
-				specular: '#ffffff',
-				emissive: '#4d4d4d',
-				shininess: 309,
-				reflectivity: 0.89,
-				// emissive
-				ehue: 0.15,
-				esaturation: 0.225,
-				elightness: 0.175,
+				// teeth specular
+				s1hue: 0.425,
+				s1saturation: 0.15,
+				s1lightness: 0.025,
+				shininess1: 208,
+				// gum specular
+				s2hue: 0.075,
+				s2saturation: 0.175,
+				s2lightness: 0.025,				
+				shininess2: 353,
+				// teeth emissive
+				ehue: 0.225,
+				esaturation: 0.05,
+				elightness: 0.075,
+				// gum emissive
+				ghue: 0.1,
+				gsaturation: 0.075,
+				glightness: 0,
 				
 				// for light			
 				lhue: 0.25,
 				lsaturation: 0.425, // non-zero so that fractions will be shown
 				llightness: 1,
+				lintensity: 0.675,
 								
 				//
 				lx: -84.84,
@@ -339,6 +355,7 @@
 				  toAmbientColor(val);
 				  app.renderFrame();
 			  });
+			  f.add(option, 'aintensity', 0.0, 1.0, 0.025).name('ambient instansity').onChange(updateFrame);
 			  f.add(option, 'hasFog').name('use fog').onChange((val)=>{
 				  if (val) scene.fog = fog;
 				  else scene.fog = null;
@@ -363,38 +380,34 @@
 				  app.renderFrame();
 			  });
 			  
-			  f = gui.addFolder('Phong Material');
-// 			  gumMaterial.shininess = option.shininess;
-			  f.add(option, "shininess", 1.0, 400.0, 1.0).name('shininess').onChange((val)=>{
-				  //teethMaterial.shininess = val;
-				  gumMaterial.shininess = val;
-				  app.renderFrame();
-			  });
-			  let toSpecularColor = handleColorChange(specularColor);
-			  f.addColor(option, 'specular').name('specular').onChange((val)=>{
-				  toSpecularColor(val);
-				  teethMaterial.specular.copy(specularColor);
-				  gumMaterial.specular.copy(specularColor);
-				  app.renderFrame();
-			  });
-			  toSpecularColor(option.specular);
-			  teethMaterial.color.copy(specularColor);
- 			  gumMaterial.specular.copy(specularColor); 			  
-			  f.add(option, "reflectivity", 0, 1.0).name('reflectivity').onChange((val)=>{
-					teethMaterial.reflectivity = val;
-					gumMaterial.reflectivity = val;
-					app.renderFrame();
-			  });
+			  f = gui.addFolder('Phong shininess');
+			  f.add(option, "shininess1", 1.0, 400.0, 1.0).name('teeth shininess').onChange(updateFrame);
+			  f.add(option, "shininess2", 1.0, 400.0, 1.0).name('gum shininess').onChange(updateFrame);
+			  
+			  f = gui.addFolder('Phong specular');
+			  f.add(option, 's1hue', 0.0, 1.0, 0.025).name('teeth hue').onChange(updateFrame);
+			  f.add(option, 's1saturation', 0.0, 1.0, 0.025).name('teeth saturation').onChange(updateFrame);
+			  f.add(option, 's1lightness', 0.0, 1.0, 0.025).name('teeth lightness').onChange(updateFrame);
+			  
+			  f.add(option, 's2hue', 0.0, 1.0, 0.025).name('gum hue').onChange(updateFrame);
+			  f.add(option, 's2saturation', 0.0, 1.0, 0.025).name('gum saturation').onChange(updateFrame);
+			  f.add(option, 's2lightness', 0.0, 1.0, 0.025).name('gum lightness').onChange(updateFrame);
 			  
 			  f = gui.addFolder('Teeth Emissive');
 			  f.add(option, 'ehue', 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
 			  f.add(option, 'esaturation', 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
 			  f.add(option, 'elightness', 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
 			  
+			  f = gui.addFolder('Gum Emissive');
+			  f.add(option, 'ghue', 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
+			  f.add(option, 'gsaturation', 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
+			  f.add(option, 'glightness', 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
+			  
 			  f = gui.addFolder('Lighting');
 			  f.add(option, 'lhue', 0.0, 1.0, 0.025).name('hue').onChange(updateFrame);
 			  f.add(option, 'lsaturation', 0.0, 1.0, 0.025).name('saturation').onChange(updateFrame);
 			  f.add(option, 'llightness', 0.0, 1.0, 0.025).name('lightness').onChange(updateFrame);
+			  f.add(option, 'lintensity', 0.0, 1.0, 0.025).name('intensity').onChange(updateFrame);
 						  
 			  f = gui.addFolder('Light Positoin');
 			  f.add(option, 'lx', -11135.0, 11135.0, 0.02).name('x').onChange(updateFrame);
@@ -421,10 +434,19 @@
 			        group.rotation.x = -1
 			    }
 				
-			    teethMaterial.emissive.setHSL(option.ehue, option.esaturation, option.elightness);
+			    teethMaterial.shininess = option.shininess1;
+			    gumMaterial.shininess = option.shininess2;		
 			    
-				directionLight.position.set(option.lx, option.ly, option.lz);
-				directionLight.color.setHSL(option.lhue, option.lsaturation, option.llightness);
+			    teethMaterial.specular.setHSL(option.s1hue, option.s1saturation, option.s1lightness);
+			    gumMaterial.specular.setHSL(option.s2hue, option.s2saturation, option.s2lightness);
+			    
+			    teethMaterial.emissive.setHSL(option.ehue, option.esaturation, option.elightness);
+			    gumMaterial.emissive.setHSL(option.ghue, option.gsaturation, option.glightness);
+			    
+			    ambientLight.intensity = option.aintensity;
+				light.position.set(option.lx, option.ly, option.lz);
+				light.color.setHSL(option.lhue, option.lsaturation, option.llightness);
+				light.intensity = option.lintensity;
 				
 				renderer.clear();
 				renderer.setViewport(0, 0, app.fullWidth, app.fullHeight);
@@ -432,7 +454,7 @@
 								
 				renderer.clearDepth();
 				renderer.setViewport(0, 0, 150, app.fullHeight);
-				renderer.render(uiScene, uiCamera);				
+				renderer.render(uiScene, uiCamera);					
 			}, ()=>{
 				app.updateSize(app.fullWidth, app.fullHeight);
 			});			
