@@ -16,7 +16,12 @@ class App {
 			if ((container instanceof HTMLCanvasElement)) {
 				
 				console.log('container is canvas')
-				this.renderer = new THREE.WebGLRenderer({canvas:container});
+				this.renderer = new THREE.WebGLRenderer({
+					canvas:container, 
+					antialias: true,
+//					precision: highp,
+					logarithmicDepthBuffer: false,
+				});
 				
 			} else {
 		
