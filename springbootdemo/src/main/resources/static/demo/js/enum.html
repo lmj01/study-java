@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Pure Demo All</title>
+	<script type="text/javascript" src="../../js/mjEnum.js"></script>
+</head>
+<body>
+	<p>pure demo for html css js</p>
+	<div>	
+	</div>
+	<script>
+		let kv1 = new mjEnum({
+			enuUnknown: 0,
+		    enuPerson: 1,
+		    enuItem: 2,
+		    enuSalary: 3,
+		    enuTax: 4,
+		    enuZip: 5,
+		    enuAddress: 6,
+		    enuLocation: 7,
+		    enuTasks: 8,
+		});
+		console.log(kv1.toK('enuZip'), kv1.toV(5));		
+// 		console.log(kv1.toK(5));
+		console.log('idx', kv1.toIdx('enuZip'), kv1.toIdx('enu'), kv1.byIdx(5));
+
+		let kv2 = new mjEnum({
+			0: 'unknown',
+			1: 'person',
+			2: 'item',
+			3: 'salary',
+			4: 'tax',
+			5: 'zip',
+			6: 'address',
+			7: 'location',
+			8: 'tasks',
+		})
+		console.log(kv2.toK(5), kv2.toV('zip'));
+// 		console.log(kv2.toV('234w'));
+// 		console.log(kv2.toK(20));
+	</script>
+</body>
+</html>

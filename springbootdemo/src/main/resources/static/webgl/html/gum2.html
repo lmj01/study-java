@@ -49,9 +49,10 @@
 			
 			let imgInfo = [
 				['uvDiffuse.png', 'uvNormal.png', 'lower.ply'],
-				['uvDiffuse.png', 'uvNormal.png', 'gum4part.ply'], // 
+				['uvDiffuse.png', 'uvNormal.png', 'gum4part.ply'], //
+				['uvDiffuse.png', 'uvNormal.png', 'lowerPatch.ply'],
 			];
-			let mInfo = imgInfo[1], 
+			let mInfo = imgInfo[2], 
 				tInfo = [
 // 					'11.ply','12.ply','13.ply','14.ply','15.ply','16.ply','17.ply',
 					'21.ply','22.ply','23.ply','24.ply','25.ply','26.ply','27.ply',
@@ -60,7 +61,7 @@
 					];
 						
 			let lut = new THREE.Lut();
-			lut.setColorMap('teeth');
+			lut.setColorMap('rainbow');
 			let mapDiffuse = new THREE.CanvasTexture(lut.createCanvas());
 // 			let mapDiffuse = new THREE.TextureLoader().load('../models/teeth/colorbar.png');
 
@@ -78,15 +79,16 @@
 			let mapTex = new THREE.TextureLoader().load('../models/gum/' + mInfo[0]),
 				mapNormal = new THREE.TextureLoader().load('../models/gum/' + mInfo[1]);
 			let teethMaterial = new THREE.MeshPhongMaterial({ 
-				map: mapDiffuse,
+				map: mapDiffuse,	
 				specular: 0x222222,
-// 				vertexColors: THREE.VertexColors,
+				vertexColors: THREE.VertexColors,
 				shininess: 400,
 				emissive: 0x4d4d4d
 			});
 			let gumMaterial = new THREE.MeshPhongMaterial({
 				color: 0xffffff,
 				map:mapTex,
+				vertexColors: THREE.VertexColors,
 				specular: 0x222222,
 				specularMap: mapSpecular,
 				shininess: 390,		
@@ -170,16 +172,17 @@
 	            document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
 	            document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
 	        }
-									
-	        let ambientLight = new THREE.AmbientLight(0xffffff, 0.2), // 0.2
-			light = new THREE.DirectionalLight(0xffffff, 0.3),
-			fog = new THREE.Fog(0x3f7b9d, 0, 60);			
+	        
+	        // light 									
+			let ambientLight = new THREE.AmbientLight(0xffffff, 0.2), // 0.2
+				light = new THREE.DirectionalLight(0xffffff, 0.3),
+				fog = new THREE.Fog(0x3f7b9d, 0, 60);			
 			if (light.isDirectionalLight) {
 				light.castShadow = true; // 灯光投掷阴影
 				light.shadow.mapSize.width = 2048;
 				light.shadow.mapSize.height = 2048;
-	//				light.shadow.camera.near = 0.5;
-	//				light.shadow.camera.far = 5000;
+// 				light.shadow.camera.near = 0.5;
+// 				light.shadow.camera.far = 5000;
 				
 				let dlTargetObject = new THREE.Object3D();
 	 			scene.add(dlTargetObject);
@@ -191,10 +194,22 @@
 			let scale = 1, mesh = null;
 			if (true) {
 				new THREE.PLYLoader().load('../models/gum/' + mInfo[2], function(geo) {
+					let colors = [], color = new THREE.Color('rgb(244,226,232)');
+					for (let i=0; i<geo.attributes.position.count;i++) {
+						colors.push(color.r);
+						colors.push(color.g);
+						colors.push(color.b);
+					}
+					geo.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+					geo.computeVertexNormals();
+					geo.normalizeNormals();
+					geo.attributes.color.needsUpdate = true;
 					let gum = new THREE.Mesh(geo, gumMaterial);
 					gum.name = 'gum';
-					gum.rotation.x -= Math.PI/2;
+// 					gum.rotation.x -= Math.PI/2;
 					updateOrthoCamera(camera, app.control);
+					gum.castShadow = true;
+					gum.receiveShadow = false;
 					group.add(gum);
 				});
 			}
@@ -207,47 +222,37 @@
 						return '';
 					})
 					.then((res)=>{
-						let data = [], maxv = 1.0, minv = -1
-							maxy = -1000, miny = 1000,
-							count =geo.attributes.position.count;
+						let data = [], maxv = 0.0, minv = -1;
 						res.split('\n').map((v)=>{
 							if (v.length > 0) {
 								let r = parseFloat(v);
-// 									Math.abs(parseFloat(v));
 								if (r > maxv) r = maxv;
 								if (r < minv) r = minv;
 								data.push(r);
 							}
 						});
-						for (let i=0; i<count; i++) {
-							let y = geo.attributes.position.array[i*3+1];
-							if (y > maxy) maxy = y;
-							if (y < miny) miny = y;	
-						}
 						lut.setMax(maxv);lut.setMin(minv);
-						let colors = [], uvs = [], 
-							vrange = maxv-minv,
-							yrange = maxy - miny,
-							color = new THREE.Color('rgb(244,226,232)');
-// 						console.log(tid, maxy, miny, yrange);
-						for (let i=0; i<count;i++) {
+						let colors = [], uvs = [], vrange = maxv-minv,
+							color = new THREE.Color(232/255, 217/255, 213/255);
+// 						console.log('----',maxv, minv, vrange);
+						for (let i=0; i<geo.attributes.position.count;i++) {
 							let c =(data[i]-minv) / vrange;
-							let y = geo.attributes.position.array[i*3+1],
-								cy = (tid<30? (maxy -y):(y - miny)) / yrange;
-// 							colors.push(color.r);colors.push(color.g);colors.push(color.b);
+// 							if (c < 0.1) 	color.add(lut.getColor(c));
+// 							if (c < 0.1) color.sub(lut.getColor(c));
+							//console.log('--',color, c);
+							colors.push(color.r);colors.push(color.g);colors.push(color.b);
 							uvs.push(0.5);
-							if (c < 0.2) uvs.push(c);
-							else uvs.push(cy);
+							uvs.push(c);
 						}
 						geo.addAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-// 						geo.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+						geo.addAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 						geo.computeVertexNormals();
 						geo.normalizeNormals();
-// 						geo.attributes.color.needsUpdate = true;
+						geo.attributes.color.needsUpdate = true;
 						let teeth = new THREE.Mesh(geo, teethMaterial);
 						teeth.name = 'teeth' + tid;
 						teeth.castShadow = true;
-						teeth.receiveShadow = true;
+						teeth.receiveShadow = false;
 						group.add(teeth);
 					});					
 				});
@@ -443,7 +448,7 @@
 								
 				renderer.clearDepth();
 				renderer.setViewport(0, 0, 150, app.fullHeight);
-				renderer.render(uiScene, uiCamera);					
+				renderer.render(uiScene, uiCamera);				
 			}, ()=>{
 				app.updateSize(app.fullWidth, app.fullHeight);
 			});			
