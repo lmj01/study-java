@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Test | Quaternion</title>
+	<style>
+		.btn {
+			position: absolute;			
+			top: 50px;
+			left: 40%;
+			z-index:50;
+		}
+	</style>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>	
+	<script type="text/javascript" src="../vendors/signals.min.js"></script>
+</head>
+<body>
+	<script type="text/javascript" src="../js/app.js"></script>
+	<script type="text/javascript" src="../js/util.js"></script>
+	<script>
+		// 参考来源
+		// http://projects.defmech.com/ThreeJSObjectRotationWithQuaternion/
+		let app, mesh;
+		Promise.resolve(new App(window.innerWidth, window.innerHeight))
+		.then(newApp=>{
+			app = newApp;
+			const { renderer, scene, fullWidth, fullHeight } = app;
+			let near = 0.1, far = 10000.0, el = renderer.domElement;
+			let camera = 
+				new THREE.OrthographicCamera(-fullWidth/2, fullWidth/2, fullHeight/2, -fullHeight/2	, near, far);
+				new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, far );
+// 			camera.position.set( 0, 0, 480 ); // for perspective 
+			camera.position.set( 0, 0, 80 ); // for orthographic 
+			app.setCamera(camera);
+			
+						
+			app.scene.background = new THREE.Color( 0xa0a0a0 );
+			app.scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
+		
+			var hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+			hemiLight.position.set( 0, 200, 0 );
+			app.add( hemiLight );
+	
+			var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			directionalLight.position.set( 0, 200, 100 );
+			directionalLight.castShadow = true;
+			directionalLight.shadow.camera.top = 180;
+			directionalLight.shadow.camera.bottom = - 100;
+			directionalLight.shadow.camera.left = - 120;
+			directionalLight.shadow.camera.right = 120;
+			app.add( directionalLight );
+		
+			var axes = new THREE.AxesHelper(200);
+			app.add( axes );
+	
+			var geometry =
+// 				new THREE.BoxBufferGeometry( 100, 100, 100 );
+				new THREE.TorusKnotBufferGeometry( 50, 15, 200, 30 );
+			var material = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
+			mesh = new THREE.Mesh( geometry, material );
+			mesh.castShadow = true;
+			mesh.position.y = 25;
+			app.add( mesh );
+
+			let isMouseDown = false,
+				deltaX, deltaY,
+				halfWidth = fullWidth/2, halfHeight = fullHeight/2,
+				lastMoveTimestamp = new Date(),
+				startPoint = new THREE.Vector2(), 
+				rotateStartPoint = new THREE.Vector3(0,0,1), rotateEndPoint = rotateStartPoint.clone();
+			function clamp(value, min, max) {
+				return Math.min(Math.max(value, min), max);
+			}
+			function projectOnTrackball(x, y) {
+				let mouseOnBall = new THREE.Vector3();
+				mouseOnBall.set(
+					clamp( x / halfWidth, -1, 1), 
+					clamp(-y / halfHeight, -1, 1),
+					0.0
+				);
+				let length = mouseOnBall.length();
+				
+				if (length > 1.0) mouseOnBall.normalize();
+				else mouseOnBall.z = Math.sqrt(1.0 - length * length);
+				
+				return mouseOnBall;
+			}
+			function rotateMatrix(rotateStart, rotateEnd) {
+				
+				let axis = new THREE.Vector3(), 
+					quaternion = new THREE.Quaternion();
+				
+				let angle = Math.acos(rotateStart.dot(rotateEnd) / rotateStart.length() / rotateEnd.length() );
+				
+				if (angle) {
+					axis.crossVectors(rotateStart, rotateEnd).normalize();
+					angle *= 2; // rotation speed
+					quaternion.setFromAxisAngle(axis, angle);
+				}
+				return quaternion;
+			}
+			function handleRotation() {
+				
+				rotateEndPoint = projectOnTrackball(deltaX, deltaY);
+				
+				let rotateQuaternion = rotateMatrix(rotateStartPoint, rotateEndPoint);
+				
+				let curQuaternion = mesh.quaternion;
+				curQuaternion.multiplyQuaternions(rotateQuaternion, curQuaternion);
+				curQuaternion.normalize();
+				mesh.setRotationFromQuaternion(curQuaternion);
+				//console.log('--rotation--', mesh.quaternion);
+				//mesh.updateMatrix();
+				
+				rotateEndPoint = rotateStartPoint;				
+			}
+			document.addEventListener('mousedown', (e)=>{
+				e.preventDefault();
+				document.addEventListener('mousemove', onMouseMove, false);
+				document.addEventListener('mouseup', onMouseUp, false);
+				isMouseDown = true;
+				startPoint.set(e.clientX, e.clientY);
+				rotateStartPoint = rotateEndPoint = projectOnTrackball(0, 0);
+			}, false);
+			function onMouseMove(e) {	
+				
+				deltaX = e.x - startPoint.x;
+				deltaY = e.y - startPoint.y;
+				
+				handleRotation();
+				
+				startPoint.x = e.x;
+				startPoint.y = e.y;
+				
+				lastMoveTimestamp = new Date();
+			}
+			function onMouseUp(e) {
+				if (new Date().getTime() - lastMoveTimestamp.getTime() > 50) {
+					deltaX = e.x - startPoint.x;
+					deltaY = e.y - startPoint.y;
+				}
+				isMouseDown = false;
+				document.removeEventListener('mousemove', onMouseMove, false);
+				document.removeEventListener('mouseup', onMouseUp, false);
+			}
+			
+			let drag = 0.95, minDelta = 0.05;			
+			app.renderCallback(()=>{
+				if (!isMouseDown) {
+					//console.log('----render');
+					if (deltaX < -minDelta || deltaX > minDelta) {
+						deltaX *= drag;	
+					} else {
+						deltaX = 0;
+					}
+					if (deltaY < -minDelta || deltaY > minDelta) {
+						deltaY *= drag;
+					} else {
+						deltaY = 0;
+					}
+					handleRotation();
+				}
+				app.renderDefault();
+			}, ()=>{
+				app.updateSize(window.innerWidth, window.innerHeight);
+				halfWidth = fullWidth/2;
+				halfHeight = fullHeight/2;
+			});			
+			app.controlUpdate();
+			app.renderLoop();
+		});				
+	</script>
+</body>
+</html>

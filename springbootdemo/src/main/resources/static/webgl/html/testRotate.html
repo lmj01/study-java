@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>Test | Matrix</title>
+	<title>Test | Rotate</title>
 	<style>
 		.btn {
 			position: absolute;			
@@ -11,14 +11,15 @@
 			z-index:50;
 		}
 	</style>
-	<script type="text/javascript" src="../vendors/threejs/three.js"></script>
-	<script type="text/javascript" src="../vendors/threejs/OrbitControls.js"></script>
+	<script type="text/javascript" src="../vendors/threejs/three.js"></script>	
 	<script type="text/javascript" src="../vendors/signals.min.js"></script>
 </head>
 <body>
 	<script type="text/javascript" src="../js/app.js"></script>
 	<script type="text/javascript" src="../js/util.js"></script>
 	<script>
+		// 参考来源，threejs的版本较低，原理没吃透
+		// https://mrdoob.com/projects/voxels/
 		let app, mesh;
 		Promise.resolve(new App(window.innerWidth, window.innerHeight))
 		.then(newApp=>{
@@ -26,10 +27,12 @@
 			const { renderer, scene, fullWidth, fullHeight } = app;
 			let near = 0.1, far = 10000.0;
 			let camera = 
-				new THREE.OrthographicCamera(-fullWidth/2, fullWidth/2, fullHeight/2, -fullHeight/2	, near, far);
-				//new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-			camera.position.set( 0, 0, 80 );
+// 				new THREE.OrthographicCamera(-fullWidth/2, fullWidth/2, fullHeight/2, -fullHeight/2	, near, far);
+				new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, far );
+			camera.position.set( 0, 0, 480 ); // for perspective 
+// 			camera.position.set( 0, 0, 80 ); // for orthographic 
 			app.setCamera(camera);
+			
 						
 			app.scene.background = new THREE.Color( 0xa0a0a0 );
 			app.scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
@@ -71,6 +74,52 @@
 // 			var controls = new THREE.OrbitControls( camera, app.renderer.domElement );
 // 			controls.target.set( 0, 25, 0 );
 // 			controls.update();
+
+			let isMouseDown = false, 
+				onMouseDownPosition = new THREE.Vector2(),
+				radious = 1600, theta = 45, onMouseDownTheta = 45,
+				phi = 60, onMouseDownPhi = 60;
+			function rotateScene() {
+				camera.position.x = radious * Math.sin(theta * Math.PI / 360) * Math.cos(phi * Math.PI / 360);
+				camera.position.y = radious * Math.sin(phi * Math.PI / 360);
+				camera.position.z = radious * Math.cos(theta * Math.PI / 360) * Math.cos(phi * Math.PI / 360);
+				camera.updateMatrix();
+			}
+			rotateScene();
+// 			camera.target.position.y = 200;
+			document.addEventListener('mousemove', onDocumentMouseMove, false);
+			document.addEventListener('mousedown', onDocumentMouseDown, false);
+			document.addEventListener('mouseup', onDocumentMouseUp, false);
+			document.addEventListener('mousewheel', onDocumentMouseWheel, false);
+			function onDocumentMouseDown(e) {
+				e.preventDefault();
+				isMouseDown = true;
+				onMouseDownTheta = theta;
+				onMouseDownPhi = phi;
+				onMouseDownPosition.set(e.clientX, e.clientY);
+			}
+			function onDocumentMouseMove(e) {
+				e.preventDefault();
+				if (isMouseDown) {
+					theta = -((e.clientX - onMouseDownPosition.x) * 0.5 ) + onMouseDownTheta;
+					phi = ((e.clientY - onMouseDownPosition.y) * 0.5 ) + onMouseDownPhi;
+					phi = Math.min(180, Math.max(0, phi));
+					console.log('move--', theta, phi);
+					rotateScene();
+				}
+			}
+			function onDocumentMouseUp(e) {
+				e.preventDefault();
+				isMouseDown = false;
+				onMouseDownPosition.x = e.clientX - onMouseDownPosition.x;
+				onMouseDownPosition.y = e.clientY - onMouseDownPosition.y;
+			}
+			function onDocumentMouseWheel(e) {
+				radious -= e.wheelDeltaY;
+				console.log('wheel--',radious);
+				rotateScene();
+			}
+				
 						
 			app.renderCallback(()=>{
 				app.renderDefault();
@@ -79,43 +128,7 @@
 			});			
 			app.controlUpdate();
 			app.renderLoop();
-		});
-		let mat4;
-		function alignMesh() {
-			let nUp = new THREE.Vector3(0.08076842129230499, 0.9810596704483032, 0.17606352269649506),
-            up = new THREE.Vector3(0,1,0), 
-            nDirection = new THREE.Vector3();
-        nUp.normalize();
-        nDirection.crossVectors(nUp, up);    
-        nDirection.normalize();
-        let angle = Math.acos(nUp.dot(up));
-        let quat = new THREE.Quaternion();
-        quat.setFromAxisAngle(nDirection, angle);            
-        mat4 = new THREE.Matrix4();
-        mat4.identity();
-        mat4.makeRotationFromQuaternion(quat);
-        console.log(angle, quat, mat4);
-        mesh.quaternion.copy(quat);
-        mesh.matrixWorld.makeRotationFromQuaternion(quat);
-        mesh.updateMatrixWorld();
-        mesh.matrixWorldNeedsUpdate = true;
-        app.renderFrame();
-		}
-		
-		function testMat() {
-			let 
-				step = [0.9633146,0.2657329,0.03755945,-2.7631192,-0.24913648,0.93749315,-0.24297585,0.27807295,-0.09977842,0.22470523,0.9693052,-0.7873882,0,0,0,1],
-				res2 = [0.9999643810061165,-0.00843825125868562,0.00019912217058900593,0,0.008438251900353787,0.9988514065764978,-0.047168025032785284,0,0.0001991221637940269,0.04716801983640402,0.9988869190356933,0,-1.070486413399557,8.908611178400264,-0.7925342545365415,1],
-				res1 = [0.9570998741089652,0.28926928102144783,0.016826200249478285,0,-0.2792017278620938,0.9362060310893634,-0.21345918006659884,0,-0.07749996491623551,0.19960382749005431,0.9768070465728158,0,-1.070486413399557,8.908611178400264,-0.7925342545365415,1];			
-			// nUp x: -0.008438251229088612, y: 0.9988513271176405, z: 0.04716802128055638
-			
-			let matStep = new THREE.Matarix4();
-			matStep.elements
-			
-			
-			
-		}
-		
+		});				
 	</script>
 </body>
 </html>
