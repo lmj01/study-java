@@ -9,6 +9,39 @@ import java.util.stream.Collectors;
 
 public class UseList {
 
+	class BtnInfo implements Comparable<BtnInfo> {
+		public int start;
+		public int end;
+		
+		public BtnInfo(int start, int end) {
+			this.start = start;
+			this.end = end;
+		}
+		
+		public int getStart() {
+			return start;
+		}
+
+		public void setStart(int start) {
+			this.start = start;
+		}
+
+		public int getEnd() {
+			return end;
+		}
+
+		public void setEnd(int end) {
+			this.end = end;
+		}
+
+		@Override
+		public int compareTo(BtnInfo s) {
+			if (this.start >= s.start) {
+				return 1;
+			}
+			return -1;
+		}
+	}
 	public static class Item {
 		private int ia;
 		private String str;
@@ -50,27 +83,6 @@ public class UseList {
 		}
 	}
 	
-	public static class Aggregation {
-		private int startId;
-		private int endId;
-		public Aggregation(int start, int end) {
-			this.startId = start;
-			this.endId = end;
-		}
-		public int getStartId() {
-			return startId;
-		}
-		public void setStartId(int startId) {
-			this.startId = startId;
-		}
-		public int getEndId() {
-			return endId;
-		}
-		public void setEndId(int endId) {
-			this.endId = endId;
-		}
-		
-	}
 	protected int sortList(List<Integer> list) {
 		int count = 1;
 		List<Integer> pos = list.stream().filter(x->x>=0).collect(Collectors.toList());
@@ -106,71 +118,22 @@ public class UseList {
 		}
 		return count;
 	}
+	
 	public void demo2() {
-		System.out.print("\nsequence but much stage order situation");
-		List<Aggregation> data1 = new ArrayList<>();
-		data1.add(new Aggregation(22, 31));
-		data1.add(new Aggregation(32, -1));
-		data1.add(new Aggregation(0, 21));
 		
-		List<Integer> list1 = data1.stream()
-				.map(x -> x.getStartId())
-				.collect(Collectors.toList());
-		list1.addAll(data1.stream().map(x->x.getEndId()).collect(Collectors.toList()));
+		List<BtnInfo> data1 = new ArrayList<>();
+		data1.add(new BtnInfo(22, 31));
+		data1.add(new BtnInfo(32, -1));
+		data1.add(new BtnInfo(0, 21));
 		
-		//startList.sort((a,b)->a-b);
-		
-		int count = sortList(list1);
-		System.out.println(String.format("\nvalid count is %d", count));
-		for (Integer a : list1) {
-			System.out.print(a+", ");
+		data1.sort(Comparator.naturalOrder()); // 正序
+//		Collections.sort(data1); // 正序
+		for (BtnInfo bi : data1) {
+			System.out.println(String.format("s(%d)--e(%d)", bi.start, bi.end));
 		}
 		
-		System.out.print("\n\norder sort situation");
-		List<Aggregation> data2 = new ArrayList<>();
-		data2.add(new Aggregation(0, 10));
-		data2.add(new Aggregation(11, -1));
-		
-		List<Integer> list2 = data2.stream()
-				.map(x->x.getStartId())
-				.collect(Collectors.toList());
-		list2.addAll(data2.stream().map(x->x.getEndId()).collect(Collectors.toList()));
-		count = sortList(list2);
-		System.out.println(String.format("\nvalid count is %d", count));
-		for (Integer a : list2) {
-			System.out.print(a+", ");
-		}
-		
-		List<Aggregation> data3 = new ArrayList<>();
-		data3.add(new Aggregation(11, -1));
-		data3.add(new Aggregation(0, 10));
-		
-		List<Integer> list3 = data3.stream()
-				.map(x->x.getStartId())
-				.collect(Collectors.toList());
-		list3.addAll(data3.stream().map(x->x.getEndId()).collect(Collectors.toList()));
-		count = sortList(list3);
-		System.out.println(String.format("\nvalid count is %d", count));
-		for (Integer a : list3) {
-			System.out.print(a+", ");
-		}
-		
-		System.out.print("\n\nrepeat situation");
-		List<Aggregation> data4 = new ArrayList<>();
-		data4.add(new Aggregation(0, -1));
-		data4.add(new Aggregation(0, -1));
-		
-		List<Integer> list4 = data4.stream()
-				.map(x->x.getStartId())
-				.collect(Collectors.toList());
-		list4.addAll(data4.stream().map(x->x.getEndId()).collect(Collectors.toList()));
-		count = sortList(list4);
-		System.out.println(String.format("\nvalid count is %d", count));
-		for (Integer a : list4) {
-			System.out.print(a+", ");
-		}
-		System.out.println();
 	}
+	
 	
 	public static void test() {
 		
@@ -180,4 +143,5 @@ public class UseList {
 
 		ul.demo2();
 	}
+	
 }
