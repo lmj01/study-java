@@ -6,6 +6,13 @@ a.out
 .settings
 !.mvn/wrapper/maven-wrapper.jar
 
+
+# 忽略测试
+xuggle/*.mp4
+xuggle/*.png
+xuggle/*.txt
+xuggle/*.log
+
 */.classpath
 */.project
 */.settings/
@@ -20,12 +27,25 @@ image/target/
 
 itext/target/
 !itext/.mvn/wrapper/maven-wrapper.jar
+itext/*.png
 
 springbootdemo/logs/
 springbootdemo/target/
-!springbootdemo/.mvn/wrapper/maven-wrapper.jar
+#!springbootdemo/.mvn/wrapper/maven-wrapper.jar
 springbootdemo/applog/
+springbootdemo/src/main/resources/static/standalone3/*
+springbootdemo/src/main/resources/static/webgl/models/*
+
 
 thirdFFI/target
 !thirdFFI/.mvn/wrapper/maven-wrapper.jar
 
+# 忽略结尾为ignore的文件夹
+*ignore/
+
+# 忽略中间包含ignore的文件夹
+*ignore*/
+
+# 忽略指定文件夹
+*.jpg
+*.txt
