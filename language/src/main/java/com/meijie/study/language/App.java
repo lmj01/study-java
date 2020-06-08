@@ -16,11 +16,16 @@ public class App
         
 //        UseTime.test();
         
-//        UseChar.test();
+        try {
+			UseEncoding.test();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
 //        UseMath.test();
         
-        UseList.test();
+//        UseList.test();
         
 //        Others.test();
     }
